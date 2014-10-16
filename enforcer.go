@@ -5,7 +5,7 @@ import (
   "os"
   "fmt"
   "io/ioutil"
-  "log"
+  "./log"
   "encoding/json"
   "flag"
   "./gobucket"
@@ -40,11 +40,13 @@ var configDir = flag.String("configdir", "configs", "the folder containing repos
 var verbose = flag.Bool("v", false, "print more output")
 
 func main() {
+  log.SetPrefix("bitbucket-enforcer")
+
   flag.Parse()
 
   err := dotenv.Load()
-  if err != nil {
-    log.Fatal("Error loading .env file")
+  if (err != nil) {
+    log.Notice(".env error", err)
   }
 
   oauth_key := os.Getenv("BITBUCKET_ENFORCER_KEY")
@@ -53,23 +55,23 @@ func main() {
   fmt.Println("key:", oauth_key)
   fmt.Println("pass:", oauth_pass)
 
-  settings := parseConfig(*configDir + "/default.json")
+  gobucket := gobucket.New("", "")
+  fmt.Println(gobucket)
 
-  res2B, _ := json.Marshal(settings)
-  fmt.Println(string(res2B))
+//  settings := parseConfig(*configDir + "/default.json")
 }
 
 func parseConfig(configFile string) RepositorySettings {
     config_raw, err := ioutil.ReadFile(configFile)
     if err != nil {
-      log.Fatal(err)
+      log.Panic(err)
     }
 
     var config RepositorySettings
     json.Unmarshal(config_raw, &config)
 
     if *verbose {
-      log.Print("Loaded config: ", config)
+      log.Info("Loaded config: ", config)
     }
 
     return config
