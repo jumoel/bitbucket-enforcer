@@ -1,7 +1,7 @@
 package main
 
 import (
-  _ "github.com/joho/godotenv/autoload"
+  dotenv "./vendor/godotenv"
   "os"
   "fmt"
   "io/ioutil"
@@ -41,6 +41,11 @@ var verbose = flag.Bool("v", false, "print more output")
 
 func main() {
   flag.Parse()
+
+  err := dotenv.Load()
+  if err != nil {
+    log.Fatal("Error loading .env file")
+  }
 
   oauth_key := os.Getenv("BITBUCKET_ENFORCER_KEY")
   oauth_pass := os.Getenv("BITBUCKET_ENFORCER_PASS")
