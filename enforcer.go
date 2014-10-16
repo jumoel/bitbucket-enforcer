@@ -56,7 +56,8 @@ func main() {
   fmt.Println("pass:", oauth_pass)
 
   gobucket := gobucket.New("", "")
-  fmt.Println(gobucket)
+
+  fmt.Println(gobucket.GetRepositories("omi-nu"))
 
 //  settings := parseConfig(*configDir + "/default.json")
 }
