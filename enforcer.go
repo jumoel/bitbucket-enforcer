@@ -10,10 +10,10 @@ import (
 )
 
 type RepositorySettings struct {
-  LandingPage string // TODO unmarshal into enum like type
+  LandingPage string
   Private bool
   MainBranch string
-  Forks string // TODO: Unmarshal 'forks' into an enum like type
+  Forks string
   DeployKeys []struct {
     Name string
     Key string
@@ -22,34 +22,34 @@ type RepositorySettings struct {
   BranchManagement struct {
     PreventDelete []string
     PreventRebase []string
-    AllowPushes []struct {
-      BranchName string
+    AllowPushes map[string] struct {
       Groups []string
       Users []string
     }
   }
 
   AccessManagement struct {
-    Users []struct {
-      User string
-      Permission string // TODO unmarshal permission into an enum like type (read, write, adming)
-    }
-    Groups []struct {
-      Group string
-      Permission string // TODO unmarshal permission into an enum like type (read, write, adming)
-    }
+    Users []map[string] string // An array of username => permission maps
+    Groups []map[string] string // ditto
   }
 }
 
-var configFile = flag.String("config", "golive.json", "the configfile to read")
+var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
 
 func main() {
+  flag.Parse()
+
   oauth_key := os.Getenv("BITBUCKET_ENFORCER_KEY")
   oauth_pass := os.Getenv("BITBUCKET_ENFORCER_PASS")
 
   fmt.Println("key:", oauth_key)
   fmt.Println("pass:", oauth_pass)
+
+  settings := parseConfig(*configDir + "/default.json")
+
+  res2B, _ := json.Marshal(settings)
+  fmt.Println(string(res2B))
 }
 
 func parseConfig(configFile string) RepositorySettings {
