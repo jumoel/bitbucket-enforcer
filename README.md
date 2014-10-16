@@ -27,6 +27,7 @@ Plans to support:
 The `bitbucket-enforcer` tool uses an OAuth consumer key and password to
 communicate with the Bitbucket API. These are read from the
 `BITBUCKET_ENFORCE_KEY` and `BITBUCKET_ENFORCE_PASS` environment variables.
+`bitbucket-enforcer` supports [`.env` files](https://www.github.com/joho/godotenv).
 
 Enforcement policy configuration files should be placed in the `config` folder.
 
