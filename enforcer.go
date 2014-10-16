@@ -8,6 +8,7 @@ import (
   "log"
   "encoding/json"
   "flag"
+  "./gobucket"
 )
 
 type RepositorySettings struct {
