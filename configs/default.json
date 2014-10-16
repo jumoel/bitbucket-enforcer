@@ -1,0 +1,23 @@
+{
+    "landingpage": "Branches, Commits, Downloads, Issues, Overview, Pull requests or Source",
+    "private": true,
+    "mainbranch": "...",
+    "forks": "none, private or all",
+    "deploykeys": [ { "name": "...", "key": "..." } ],
+    "posthooks": [ "list", "of", "urls" ],
+    "branchmanagement": {
+        "preventdelete": [ "list", "of", "branchnames" ],
+        "preventrebase": [ "list", "of", "branchnames" ],
+        "allowpushes": {
+            "branchname": {
+                "groups": [ "list", "of", "groups" ],
+                "users": [ "list", "of", "users" ]
+            },
+            "anotherbranch": "same as above"
+        }
+    },
+    "accessmanagement": {
+        "users": [ { "username": "read, write or admin" } ],
+        "groups": [ { "groupname": "read, write or admin" } ]
+    }
+}
