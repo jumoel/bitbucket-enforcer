@@ -7,8 +7,10 @@ import (
   "fmt"
 )
 
+var logPrefix string = ""
+
 func SetPrefix(prefix string) {
-  golog.SetPrefix(prefix)
+  logPrefix = fmt.Sprintf("[%s] ", prefix)
 }
 
 func Info(v ...interface{}) {
@@ -48,8 +50,9 @@ func log(level string, v []interface{}) {
 }
 
 func combineParams(level string, parts []interface{}) []interface{} {
-  preparts := make([]interface{}, 1)
-  preparts[0] = level
+  preparts := make([]interface{}, 2)
+  preparts[0] = logPrefix
+  preparts[1] = level
 
   parts[0] = fmt.Sprintf("[%s] ", parts[0])
   return append(preparts, parts...)
