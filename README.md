@@ -42,21 +42,21 @@ and should contain each of the following settings that are applicable:
 
 ```json
 {
-  "landing_page": "Branches, Commits, Downloads, Issues, Overview, Pull requests or Source",
+  "landingpage": "Branches, Commits, Downloads, Issues, Overview, Pull requests or Source",
   "private": "true or false",
-  "main_branch": "...",
+  "mainbranch": "...",
   "forks": "none, private or all",
   "deployment_keys": [ { "name": "...", "key": "..." } ],
-  "post_hooks": [ "list", "of", "urls" ],
-  "branch_management": {
-    "prevent_delete": [ "list", "of", "branchnames" ],
-    "prevent_rebase": [ "list", "of", "branchnames" ],
-    "allow_pushes": {
+  "posthooks": [ "list", "of", "urls" ],
+  "branchmanagement": {
+    "preventdelete": [ "list", "of", "branchnames" ],
+    "preventrebase": [ "list", "of", "branchnames" ],
+    "allowpushes": {
       "branchname": { "groups": [ "list", "of", "groups" ], "users": [ "list", "of", "users" ] },
       "anotherbranch": "same as above"
     }
   },
-  "access_management": {
+  "accessmanagement": {
     "users": [ { "username": "read, write or admin"} ],
     "groups": [ { "groupname": "read, write or admin"} ]
   }
