@@ -30,22 +30,20 @@ const (
 
 const baseUrl string = "https://bitbucket.org/api"
 
-func (c *ApiClient) callV1(endpoint string, params map[string]string) {
-  c.call("1.0", endpoint, params)
+func (c *ApiClient) callV1(endpoint string, params map[string]string) string {
+  return c.call("1.0", endpoint, params)
 }
 
-func (c *ApiClient) callV2(endpoint string, params map[string]string) {
-  c.call("2.0", endpoint, params)
+func (c *ApiClient) callV2(endpoint string, params map[string]string) string {
+  return c.call("2.0", endpoint, params)
 }
 
-func (c *ApiClient) call(version string, endpoint string, params map[string]string) {
+func (c *ApiClient) call(version string, endpoint string, params map[string]string) string {
   url := fmt.Sprintf("%s/%s/%s", baseUrl, version, endpoint)
 
-//  req, err := http.NewRequest("GET", "http://example.com", nil)
-
-  fmt.Println(url)
+  return url
 }
 
-func (c *ApiClient) GetRepositories(owner string) {
-  c.callV2(fmt.Sprintf("repositories/%s", owner), nil)
+func (c *ApiClient) GetRepositories(owner string) string {
+  return c.callV2(fmt.Sprintf("repositories/%s", owner), nil)
 }
