@@ -43,10 +43,10 @@ and should contain each of the following settings that are applicable:
 
 ```json
 {
-    "landingpage": "Branches, Commits, Downloads, Issues, Overview, Pull requests or Source",
+    "landingpage": "branches, commits, downloads, issues, overview, pull requests or source",
     "private": true,
+    "privateforks": true,
     "mainbranch": "...",
-    "forks": "none, private or all",
     "deploykeys": [ { "name": "...", "key": "..." } ],
     "posthooks": [ "list", "of", "urls" ],
     "branchmanagement": {
