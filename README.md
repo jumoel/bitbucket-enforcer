@@ -21,6 +21,8 @@ Plans to support:
   - [ ] Hooks
   - [ ] Issue tracker settings
   - [ ] Overriding enforcement type
+  - [X] Forking policy
+  - [X] Repository privacy
 
 ## Configuration
 
@@ -39,34 +41,8 @@ Enforcement policy configuration files should be placed in the `config` folder.
     0 directories, 2 files
 
 Each file in this folder specifies an enforcement type. The files are JSON files
-and should contain each of the following settings that are applicable:
-
-```json
-{
-    "landingpage": "branches, commits, downloads, issues, overview, pull requests or source",
-    "private": true,
-    "privateforks": true,
-    "mainbranch": "...",
-    "deploykeys": [ { "name": "...", "key": "..." } ],
-    "posthooks": [ "list", "of", "urls" ],
-    "branchmanagement": {
-        "preventdelete": [ "list", "of", "branchnames" ],
-        "preventrebase": [ "list", "of", "branchnames" ],
-        "allowpushes": {
-            "branchname": {
-                "groups": [ "list", "of", "groups" ],
-                "users": [ "list", "of", "users" ]
-            },
-            "anotherbranch": "same as above"
-        }
-    },
-    "accessmanagement": {
-        "users": [ { "username": "read, write or admin" } ],
-        "groups": [ { "groupname": "read, write or admin" } ]
-    }
-}
-
-```
+and should contain each of the following settings that are applicable. See
+`configs/default.json.example` for details.
 
 If a setting doesn't match the specifications or isn't present, it is ignored.
 
