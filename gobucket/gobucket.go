@@ -116,16 +116,25 @@ func (c *ApiClient) PutLandingPage(owner string, repository string, landingpage 
 	return c.putV1RepoProp(owner, repository, data).StatusCode == 200
 }
 
-func (c *ApiClient) PutPrivacy(owner string, repository string, is_private bool, private_forks bool) bool {
+func (c *ApiClient) PutPrivacy(owner string, repository string, is_private bool) bool {
 	data := url.Values{}
 	data.Set("is_private", fmt.Sprintf("%t", is_private))
 
-	if is_private {
-		data.Set("no_forks", fmt.Sprintf("%t", private_forks))
-		data.Set("no_public_forks", "true")
-	} else {
-		data.Set("no_forks", "false")
-		data.Set("no_public_forks", "false")
+	return c.putV1RepoProp(owner, repository, data).StatusCode == 200
+}
+
+func (c *ApiClient) PutForks(owner string, repository string, forks string) bool {
+	data := url.Values{}
+
+	if forks == "none" {
+		data.Set("no_forks", "True")
+		data.Set("no_public_forks", "True")
+	} else if forks == "private" {
+		data.Set("no_forks", "False")
+		data.Set("no_public_forks", "True")
+	} else if forks == "public" {
+		data.Set("no_forks", "False")
+		data.Set("no_public_forks", "False")
 	}
 
 	return c.putV1RepoProp(owner, repository, data).StatusCode == 200

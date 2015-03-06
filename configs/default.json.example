@@ -1,7 +1,7 @@
 {
     "landingpage": "branches, commits, downloads, issues, overview, pull requests or source",
     "private": true,
-    "privateforks": true,
+    "forks": "public, private, none",
     "mainbranch": "...",
     "deploykeys": [ { "name": "...", "key": "..." } ],
     "posthooks": [ "list", "of", "urls" ],
