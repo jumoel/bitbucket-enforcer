@@ -13,7 +13,7 @@ won't be changed again.
 
 Plans to support:
 
-  - [ ] Landing page
+  - [X] Landing page
   - [ ] Main branch
   - [ ] Access management
   - [ ] Branch management
