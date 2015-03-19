@@ -106,8 +106,8 @@ func main() {
 	policy := parseConfig(policyname)
 
 	fmt.Println(gobucket.PutLandingPage(parts[0], parts[1], policy.LandingPage))
-  fmt.Println(gobucket.PutPrivacy(parts[0], parts[1], policy.Private))
-  fmt.Println(gobucket.PutForks(parts[0], parts[1], policy.Forks))
+	fmt.Println(gobucket.PutPrivacy(parts[0], parts[1], policy.Private))
+	fmt.Println(gobucket.PutForks(parts[0], parts[1], policy.Forks))
 }
 
 func enforcePolicy(repo_fullname string, policyname string) {
