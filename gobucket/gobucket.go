@@ -122,6 +122,14 @@ func (c *ApiClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error
 	return keys, nil
 }
 
+func (c *ApiClient) PostDeployKey(owner string, repo string, name string, key string) error {
+	return nil
+}
+
+func (c *ApiClient) DeleteDeployKey(owner string, repo string, keyId int) error {
+	return nil
+}
+
 func (c *ApiClient) RepositoriesChanged(owner string, etag string) (bool, string, error) {
 	apiresp := c.callV2(fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
 

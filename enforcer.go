@@ -13,14 +13,19 @@ import (
 	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
 )
 
-type keyList map[string]string
+type publicKey struct {
+	Name string
+	Key  string
+}
+
+type publicKeyList []publicKey
 
 type repositorySettings struct {
 	LandingPage      string
 	Private          bool
 	MainBranch       string
 	Forks            string
-	DeployKeys       keyList
+	DeployKeys       publicKeyList
 	PostHooks        []string
 	BranchManagement struct {
 		PreventDelete []string
@@ -109,21 +114,37 @@ func main() {
 
 	*/
 
-	enforceDeployKey(parts[0], parts[1], policy.DeployKeys)
+	enforceDeployKeys(parts[0], parts[1], policy.DeployKeys)
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
 
 }
 
-func enforceDeployKey(owner string, repo string, keys keyList) {
+func (keys *publicKeyList) hasKey(key gobucket.DeployKey) bool {
+	return true
+}
+
+/*
+This method ensures the presence of all required keys by removing
+the keys that already exists with the same key-content. Afterwards
+they are added again. This ensures that the names of the keys are as
+specified in the policy file, even though it might unnecessarily delete
+and readd the same keys sometimes.
+*/
+func enforceDeployKeys(owner string, repo string, keys publicKeyList) {
 	currkeys, _ := bbAPI.GetDeployKeys(owner, repo)
 
-	/*
-		for index, key := range currkeys {
-			// Check if key already exists
+	for _, key := range currkeys {
+		if !keys.hasKey(key) {
+			bbAPI.DeleteDeployKey(owner, repo, key.Id)
 		}
-	*/
+	}
+
+	for _, key := range keys {
+		bbAPI.PostDeployKey(owner, repo, key.Name, key.Key)
+	}
+
 	fmt.Printf("%+v\n", currkeys)
 	fmt.Printf("%+v\n", keys)
 }
