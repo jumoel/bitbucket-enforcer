@@ -1,29 +1,26 @@
 package main
 
 import (
-	"./gobucket"
-	"./log"
-	dotenv "./vendor/godotenv"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
-	/*
-	  "time"
-	  "regexp"
-	*/
 	"strings"
+
+	"github.com/jumoel/bitbucket-enforcer/gobucket"
+	"github.com/jumoel/bitbucket-enforcer/log"
+	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
 )
 
-type KeyList map[string]string
+type keyList map[string]string
 
-type RepositorySettings struct {
+type repositorySettings struct {
 	LandingPage      string
 	Private          bool
 	MainBranch       string
 	Forks            string
-	DeployKeys       KeyList
+	DeployKeys       keyList
 	PostHooks        []string
 	BranchManagement struct {
 		PreventDelete []string
@@ -42,7 +39,7 @@ type RepositorySettings struct {
 
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
-var bbapi *gobucket.ApiClient
+var bbAPI *gobucket.ApiClient
 
 func main() {
 	log.SetPrefix("bitbucket-enforcer")
@@ -54,10 +51,10 @@ func main() {
 		log.Notice(".env error", err)
 	}
 
-	bb_username := os.Getenv("BITBUCKET_ENFORCER_USERNAME")
-	bb_key := os.Getenv("BITBUCKET_ENFORCER_API_KEY")
+	bbUsername := os.Getenv("BITBUCKET_ENFORCER_USERNAME")
+	bbKey := os.Getenv("BITBUCKET_ENFORCER_API_KEY")
 
-	bbapi = gobucket.New(bb_username, bb_key)
+	bbAPI = gobucket.New(bbUsername, bbKey)
 
 	/*
 		  var enforcement_matcher = regexp.MustCompile(`-enforce(?:=([a-zA-Z0-9]+))?`)
@@ -99,10 +96,10 @@ func main() {
 
 	enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
 
-	repo_fullname := "omi-nu/omi-test-nytnytnyt"
+	repoFullname := "omi-nu/omi-test-nytnytnyt"
 	policyname := "default"
 
-	parts := strings.Split(repo_fullname, "/")
+	parts := strings.Split(repoFullname, "/")
 	policy := parseConfig(policyname)
 	/*
 		fmt.Println(bbapi.PutLandingPage(parts[0], parts[1], policy.LandingPage))
@@ -115,30 +112,30 @@ func main() {
 	enforceDeployKey(parts[0], parts[1], policy.DeployKeys)
 }
 
-func enforcePolicy(repo_fullname string, policyname string) {
+func enforcePolicy(repoFullname string, policyname string) {
 
 }
 
-func enforceDeployKey(owner string, repo string, keys KeyList) {
-	currkeys, _ := bbapi.GetDeployKeys(owner, repo)
+func enforceDeployKey(owner string, repo string, keys keyList) {
+	currkeys, _ := bbAPI.GetDeployKeys(owner, repo)
 
-	for index, key := currkeys {
-		// Check if key already exists
-	}
-
-	fmt.Println("%+v\n", currkeys)
-	fmt.Println("%+v\n", keys)
-
+	/*
+		for index, key := range currkeys {
+			// Check if key already exists
+		}
+	*/
+	fmt.Printf("%+v\n", currkeys)
+	fmt.Printf("%+v\n", keys)
 }
 
-func parseConfig(configFile string) RepositorySettings {
-	config_raw, err := ioutil.ReadFile(fmt.Sprintf("%s/%s.json", *configDir, configFile))
+func parseConfig(configFile string) repositorySettings {
+	rawConfig, err := ioutil.ReadFile(fmt.Sprintf("%s/%s.json", *configDir, configFile))
 	if err != nil {
 		log.Panic(err)
 	}
 
-	var config RepositorySettings
-	json.Unmarshal(config_raw, &config)
+	var config repositorySettings
+	json.Unmarshal(rawConfig, &config)
 
 	if *verbose {
 		log.Info("Loaded config: ", config)
