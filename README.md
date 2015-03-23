@@ -14,10 +14,11 @@ won't be changed again.
 Plans to support:
 
   - [X] Landing page
-  - [ ] Main branch
+  - [ ] Ensure presence of branches (requires `git` to be installed?)
+  - [X] Main branch (only existing branches can be set)
   - [ ] Access management
   - [ ] Branch management
-  - [ ] Deployment keys
+  - [ ] Deployment keys (ensures presence of key with the same name and the same content)
   - [ ] Hooks
   - [ ] Issue tracker settings
   - [ ] Overriding enforcement type
@@ -57,3 +58,9 @@ used to override the default behaviour, which is to enforce `default` settings.
 
 In both cases, the tag will be removed from the description field and replaced
 with `-defaults-enforced`
+
+## Limitations
+
+Error messages might be bad. They are copied verbatim from bitbucket, and some of
+them contain HTML, some of them JSON-strings and some might contain something else
+entirely.

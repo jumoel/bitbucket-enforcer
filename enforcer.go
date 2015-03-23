@@ -16,15 +16,14 @@ import (
 	"strings"
 )
 
+type KeyList map[string]string
+
 type RepositorySettings struct {
-	LandingPage  string
-	Private      bool
-	MainBranch   string
-	Forks string
-	DeployKeys   []struct {
-		Name string
-		Key  string
-	}
+	LandingPage      string
+	Private          bool
+	MainBranch       string
+	Forks            string
+	DeployKeys       KeyList
 	PostHooks        []string
 	BranchManagement struct {
 		PreventDelete []string
@@ -43,6 +42,7 @@ type RepositorySettings struct {
 
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
+var bbapi *gobucket.ApiClient
 
 func main() {
 	log.SetPrefix("bitbucket-enforcer")
@@ -57,44 +57,44 @@ func main() {
 	bb_username := os.Getenv("BITBUCKET_ENFORCER_USERNAME")
 	bb_key := os.Getenv("BITBUCKET_ENFORCER_API_KEY")
 
-	gobucket := gobucket.New(bb_username, bb_key)
+	bbapi = gobucket.New(bb_username, bb_key)
 
 	/*
-	  var enforcement_matcher = regexp.MustCompile(`-enforce(?:=([a-zA-Z0-9]+))?`)
+		  var enforcement_matcher = regexp.MustCompile(`-enforce(?:=([a-zA-Z0-9]+))?`)
 
-	  var last_etag string = ""
-	  var changed bool
-		for _ = range time.Tick(1 * time.Second) {
-			changed, last_etag = gobucket.RepositoriesChanged(bb_username, last_etag)
+		  var last_etag string = ""
+		  var changed bool
+			for _ = range time.Tick(1 * time.Second) {
+				changed, last_etag = gobucket.RepositoriesChanged(bb_username, last_etag)
 
-	    if !changed {
-	      fmt.Println("No repository changes, sleeping.")
-	      continue
-	    }
+		    if !changed {
+		      fmt.Println("No repository changes, sleeping.")
+		      continue
+		    }
 
-	    repos := gobucket.GetRepositories(bb_username)
+		    repos := gobucket.GetRepositories(bb_username)
 
-	    for _, repo := range repos {
-	      if strings.Contains(repo.Description, "-noenforce") {
-	        fmt.Printf("Skipping <%s> because of '-noenforce'\n", repo.FullName)
-	        continue
-	      }
+		    for _, repo := range repos {
+		      if strings.Contains(repo.Description, "-noenforce") {
+		        fmt.Printf("Skipping <%s> because of '-noenforce'\n", repo.FullName)
+		        continue
+		      }
 
-	      if strings.Contains(repo.Description, "-enforced") {
-	        fmt.Printf("Skipping <%s> because of '-enforced'\n", repo.FullName)
-	        continue
-	      }
+		      if strings.Contains(repo.Description, "-enforced") {
+		        fmt.Printf("Skipping <%s> because of '-enforced'\n", repo.FullName)
+		        continue
+		      }
 
-	      matches := enforcement_matcher.FindStringSubmatch(repo.Description)
+		      matches := enforcement_matcher.FindStringSubmatch(repo.Description)
 
-	      enforcement_policy := "default"
-	      if len(matches) > 0 {
-	        enforcement_policy = matches[1]
-	      }
+		      enforcement_policy := "default"
+		      if len(matches) > 0 {
+		        enforcement_policy = matches[1]
+		      }
 
-	      enforcePolicy(repo.FullName, enforcement_policy)
-	    }
-		}
+		      enforcePolicy(repo.FullName, enforcement_policy)
+		    }
+			}
 	*/
 
 	enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
@@ -104,13 +104,30 @@ func main() {
 
 	parts := strings.Split(repo_fullname, "/")
 	policy := parseConfig(policyname)
+	/*
+		fmt.Println(bbapi.PutLandingPage(parts[0], parts[1], policy.LandingPage))
+		fmt.Println(bbapi.PutPrivacy(parts[0], parts[1], policy.Private))
+		fmt.Println(bbapi.PutForks(parts[0], parts[1], policy.Forks))
+		fmt.Println(bbapi.PutMainBranch(parts[0], parts[1], policy.MainBranch))
 
-	fmt.Println(gobucket.PutLandingPage(parts[0], parts[1], policy.LandingPage))
-	fmt.Println(gobucket.PutPrivacy(parts[0], parts[1], policy.Private))
-	fmt.Println(gobucket.PutForks(parts[0], parts[1], policy.Forks))
+	*/
+
+	enforceDeployKey(parts[0], parts[1], policy.DeployKeys)
 }
 
 func enforcePolicy(repo_fullname string, policyname string) {
+
+}
+
+func enforceDeployKey(owner string, repo string, keys KeyList) {
+	currkeys, _ := bbapi.GetDeployKeys(owner, repo)
+
+	for index, key := currkeys {
+		// Check if key already exists
+	}
+
+	fmt.Println("%+v\n", currkeys)
+	fmt.Println("%+v\n", keys)
 
 }
 

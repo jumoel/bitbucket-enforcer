@@ -45,6 +45,12 @@ type RepositoryResponse struct {
 	Repositories []Repository `json:"values"`
 }
 
+type DeployKey struct {
+	Id    int `json:"pk"`
+	Key   string
+	Label string
+}
+
 const baseUrl string = "https://bitbucket.org/api"
 
 func (c *ApiClient) callV1(endpoint string, method string, params url.Values) *ApiResponse {
@@ -80,7 +86,7 @@ func (c *ApiClient) call(version string, endpoint string, method string, params 
 	return apiresp
 }
 
-func (c *ApiClient) GetRepositories(owner string) []Repository {
+func (c *ApiClient) GetRepositories(owner string) ([]Repository, error) {
 	var repos []Repository = make([]Repository, 0)
 
 	page := 1
@@ -99,31 +105,60 @@ func (c *ApiClient) GetRepositories(owner string) []Repository {
 		page += 1
 	}
 
-	return repos
+	return repos, nil
 }
 
-func (c *ApiClient) RepositoriesChanged(owner string, etag string) (bool, string) {
+func (c *ApiClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
+	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%sasd/deploy-keys", owner, repo), "GET", nil)
+
+	if apiresp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", apiresp.Body)
+	}
+
+	var keys []DeployKey
+
+	json.Unmarshal([]byte(apiresp.Body), &keys)
+
+	return keys, nil
+}
+
+func (c *ApiClient) RepositoriesChanged(owner string, etag string) (bool, string, error) {
 	apiresp := c.callV2(fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
+
+	if apiresp.StatusCode != 200 {
+		return false, etag, fmt.Errorf("%s", apiresp.Body)
+	}
 
 	curr_etag := apiresp.Header.Get("Etag")
 
-	return etag != curr_etag, curr_etag
+	return etag != curr_etag, curr_etag, nil
 }
 
-func (c *ApiClient) PutLandingPage(owner string, repository string, landingpage string) bool {
+func (c *ApiClient) PutLandingPage(owner string, repository string, landingpage string) error {
 	data := url.Values{}
 	data.Set("landing_page", landingpage)
-	return c.putV1RepoProp(owner, repository, data).StatusCode == 200
+
+	res := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res)
 }
 
-func (c *ApiClient) PutPrivacy(owner string, repository string, is_private bool) bool {
+func (c *ApiClient) PutPrivacy(owner string, repository string, is_private bool) error {
 	data := url.Values{}
 	data.Set("is_private", fmt.Sprintf("%t", is_private))
 
-	return c.putV1RepoProp(owner, repository, data).StatusCode == 200
+	res := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res)
 }
 
-func (c *ApiClient) PutForks(owner string, repository string, forks string) bool {
+func (c *ApiClient) PutMainBranch(owner string, repository string, main_branch string) error {
+	data := url.Values{}
+	data.Set("main_branch", "foobar"+main_branch)
+
+	res := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res)
+}
+
+func (c *ApiClient) PutForks(owner string, repository string, forks string) error {
 	data := url.Values{}
 
 	if forks == "none" {
@@ -137,9 +172,18 @@ func (c *ApiClient) PutForks(owner string, repository string, forks string) bool
 		data.Set("no_public_forks", "False")
 	}
 
-	return c.putV1RepoProp(owner, repository, data).StatusCode == 200
+	res := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res)
 }
 
 func (c *ApiClient) putV1RepoProp(owner string, repository string, data url.Values) *ApiResponse {
 	return c.callV1(fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
+}
+
+func (c *ApiClient) getV1Error(resp *ApiResponse) error {
+	if resp.StatusCode == 200 {
+		return nil
+	} else {
+		return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
+	}
 }
