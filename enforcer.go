@@ -102,23 +102,29 @@ func main() {
 	enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
 
 	repoFullname := "omi-nu/omi-test-nytnytnyt"
-	policyname := "default"
+	//policyname := "default"
 
 	parts := strings.Split(repoFullname, "/")
-	policy := parseConfig(policyname)
+	//policy := parseConfig(policyname)
 	/*
-		fmt.Println(bbapi.PutLandingPage(parts[0], parts[1], policy.LandingPage))
-		fmt.Println(bbapi.PutPrivacy(parts[0], parts[1], policy.Private))
-		fmt.Println(bbapi.PutForks(parts[0], parts[1], policy.Forks))
-		fmt.Println(bbapi.PutMainBranch(parts[0], parts[1], policy.MainBranch))
-
+		fmt.Println(bbAPI.PutLandingPage(parts[0], parts[1], policy.LandingPage))
+		fmt.Println(bbAPI.PutPrivacy(parts[0], parts[1], policy.Private))
+		fmt.Println(bbAPI.PutForks(parts[0], parts[1], policy.Forks))
+		fmt.Println(bbAPI.PutMainBranch(parts[0], parts[1], policy.MainBranch))
+		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
 	*/
 
-	fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
+	fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
 
+}
+
+func enforcePOSTHooks(owner string, repo string, hookURLs []string) {
+	for _, url := range hookURLs {
+		fmt.Println(url)
+	}
 }
 
 type matchType int

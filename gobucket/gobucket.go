@@ -10,17 +10,6 @@ import (
 	"strconv"
 )
 
-// New returns an API client for BitBucket
-func New(key string, pass string) *APIClient {
-	client := &APIClient{}
-
-	client.Key = key
-	client.Pass = pass
-	client.HTTP = &http.Client{}
-
-	return client
-}
-
 // APIClient that holds the required objects for API interaction
 type APIClient struct {
 	Key  string
@@ -58,7 +47,30 @@ type DeployKey struct {
 	Label string
 }
 
+// Service contains properties for service hooks on a repository
+type Service struct {
+	ID      int
+	Service struct {
+		Fields []struct {
+			Name  string
+			Value string
+		}
+		Type string
+	}
+}
+
 const baseURL string = "https://bitbucket.org/api"
+
+// New returns an API client for BitBucket
+func New(key string, pass string) *APIClient {
+	client := &APIClient{}
+
+	client.Key = key
+	client.Pass = pass
+	client.HTTP = &http.Client{}
+
+	return client
+}
 
 func (c *APIClient) callV1(endpoint string, method string, params url.Values) *APIResponse {
 	return c.call("1.0", endpoint, method, params)
@@ -116,6 +128,20 @@ func (c *APIClient) GetRepositories(owner string) ([]Repository, error) {
 	return repos, nil
 }
 
+// RepositoriesChanged returns whether or not the repositories for an account has changed
+// as well as the latest ETag returned by the web server.
+func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string, error) {
+	apiresp := c.callV2(fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
+
+	if apiresp.StatusCode != 200 {
+		return false, etag, fmt.Errorf("%s", apiresp.Body)
+	}
+
+	currentEtag := apiresp.Header.Get("Etag")
+
+	return etag != currentEtag, currentEtag, nil
+}
+
 // GetDeployKeys returns a list of all deploy keys attached to a repository
 func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
 	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
@@ -129,6 +155,39 @@ func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error
 	json.Unmarshal([]byte(apiresp.Body), &keys)
 
 	return keys, nil
+}
+
+// GetServices returns a list of the service hooks attached to a repository
+func (c *APIClient) GetServices(owner string, repository string) ([]Service, error) {
+	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/services", owner, repository), "GET", nil)
+
+	if resp.StatusCode != 200 {
+
+	}
+
+	var serviceResponse []Service
+
+	json.Unmarshal([]byte(resp.Body), &serviceResponse)
+
+	return serviceResponse, nil
+}
+
+// PostService attaches a new service hook to the repository
+func (c *APIClient) PostService(owner string, repository string, servicetype string, parameters map[string]string) error {
+	data := url.Values{}
+	data.Set("type", servicetype)
+
+	for key, value := range parameters {
+		data.Set(key, value)
+	}
+
+	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/services", owner, repository), "POST", data)
+
+	if resp.StatusCode == 200 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
 // PostDeployKey attaches a new deploy key to a repository
@@ -157,18 +216,17 @@ func (c *APIClient) DeleteDeployKey(owner string, repository string, keyID int) 
 	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
-// RepositoriesChanged returns whether or not the repositories for an account has changed
-// as well as the latest ETag returned by the web server.
-func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string, error) {
-	apiresp := c.callV2(fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
+// Used when updating properties on repositories
+func (c *APIClient) putV1RepoProp(owner string, repository string, data url.Values) *APIResponse {
+	return c.callV1(fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
+}
 
-	if apiresp.StatusCode != 200 {
-		return false, etag, fmt.Errorf("%s", apiresp.Body)
+func (c *APIClient) getV1Error(resp *APIResponse) error {
+	if resp.StatusCode == 200 {
+		return nil
 	}
 
-	currentEtag := apiresp.Header.Get("Etag")
-
-	return etag != currentEtag, currentEtag, nil
+	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
 // PutLandingPage sets the landing page for a repository: "branches", "commits",
@@ -216,16 +274,4 @@ func (c *APIClient) PutForks(owner string, repository string, forks string) erro
 
 	res := c.putV1RepoProp(owner, repository, data)
 	return c.getV1Error(res)
-}
-
-func (c *APIClient) putV1RepoProp(owner string, repository string, data url.Values) *APIResponse {
-	return c.callV1(fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
-}
-
-func (c *APIClient) getV1Error(resp *APIResponse) error {
-	if resp.StatusCode == 200 {
-		return nil
-	}
-
-	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }

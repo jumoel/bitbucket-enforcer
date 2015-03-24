@@ -18,7 +18,7 @@ Plans to support:
   - [X] Main branch (only existing branches can be set)
   - [ ] Access management
   - [ ] Branch management
-  - [ ] Deployment keys (ensures presence of key with the same name and the same content)
+  - [X] Deployment keys (ensures presence of keys the defined content, potentially recreating to enforce names)
   - [ ] Hooks
   - [ ] Issue tracker settings
   - [ ] Overriding enforcement type
