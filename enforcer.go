@@ -102,29 +102,63 @@ func main() {
 	enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
 
 	repoFullname := "omi-nu/omi-test-nytnytnyt"
-	//policyname := "default"
+	policyname := "default"
 
 	parts := strings.Split(repoFullname, "/")
-	//policy := parseConfig(policyname)
+	policy := parseConfig(policyname)
 	/*
 		fmt.Println(bbAPI.PutLandingPage(parts[0], parts[1], policy.LandingPage))
 		fmt.Println(bbAPI.PutPrivacy(parts[0], parts[1], policy.Private))
 		fmt.Println(bbAPI.PutForks(parts[0], parts[1], policy.Forks))
 		fmt.Println(bbAPI.PutMainBranch(parts[0], parts[1], policy.MainBranch))
 		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
+		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
 	*/
 
-	fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
+	fmt.Println(parts)
+
+	fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
 
 }
 
-func enforcePOSTHooks(owner string, repo string, hookURLs []string) {
-	for _, url := range hookURLs {
-		fmt.Println(url)
+type bbServices []gobucket.Service
+
+func (hooks *bbServices) hasPOSTHook(URL string) bool {
+	for _, hook := range *hooks {
+		if hook.Service.Type == "POST" {
+			for _, field := range hook.Service.Fields {
+				if field.Name == "URL" && field.Value == URL {
+					return true
+				}
+			}
+		}
 	}
+
+	return false
+}
+
+func enforcePOSTHooks(owner string, repo string, hookURLs []string) error {
+	hookList, err := bbAPI.GetServices(owner, repo)
+	var currentHooks bbServices = hookList
+
+	if err != nil {
+		return err
+	}
+
+	for _, url := range hookURLs {
+		if !currentHooks.hasPOSTHook(url) {
+			err := bbAPI.PostService(owner, repo, "POST", map[string]string{"URL": url})
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 type matchType int
