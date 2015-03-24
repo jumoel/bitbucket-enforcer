@@ -20,7 +20,7 @@ deploy keys that are present in the repository settings but not in the policy fi
   - [ ] Access management
   - [ ] Branch management
   - [X] Deployment keys
-  - [ ] Hooks
+  - [X] Hooks
   - [ ] Issue tracker settings
   - [?] Overriding enforcement type
   - [X] Forking policy
