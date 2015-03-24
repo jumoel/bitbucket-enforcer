@@ -10,13 +10,16 @@ When `bitbucket-enforcer` has enforced the specified defaults, it will add
 `-defaults-enforced` to the comment field of the repository so the repository
 won't be changed again.
 
+`bitbucket-enforcer` is not destructive, so it won't remove "extra" data, such as
+deploy keys that are present in the repository settings but not in the policy file.
 
-Plans to support:
+
+## Planned Features
 
   - [X] Landing page
   - [ ] Access management
   - [ ] Branch management
-  - [X] Deployment keys (ensures presence of keys the defined content, potentially recreating to enforce names)
+  - [X] Deployment keys
   - [ ] Hooks
   - [ ] Issue tracker settings
   - [?] Overriding enforcement type
@@ -66,4 +69,4 @@ entirely.
 Main branches are not enforced. `bitbucket-enforcer` is meant to be polling for new
 repositories often, so as to enforce policies as soon as a repository is created.
 At this point, there will probably be no branches in the repository, which means
-that a main branch cannot be set. 
+that a main branch cannot be set.
