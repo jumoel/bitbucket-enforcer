@@ -14,14 +14,12 @@ won't be changed again.
 Plans to support:
 
   - [X] Landing page
-  - [ ] Ensure presence of branches (requires `git` to be installed?)
-  - [X] Main branch (only existing branches can be set)
   - [ ] Access management
   - [ ] Branch management
   - [X] Deployment keys (ensures presence of keys the defined content, potentially recreating to enforce names)
   - [ ] Hooks
   - [ ] Issue tracker settings
-  - [ ] Overriding enforcement type
+  - [?] Overriding enforcement type
   - [X] Forking policy
   - [X] Repository privacy
 
@@ -64,3 +62,8 @@ with `-defaults-enforced`
 Error messages might be bad. They are copied verbatim from bitbucket, and some of
 them contain HTML, some of them JSON-strings and some might contain something else
 entirely.
+
+Main branches are not enforced. `bitbucket-enforcer` is meant to be polling for new
+repositories often, so as to enforce policies as soon as a repository is created.
+At this point, there will probably be no branches in the repository, which means
+that a main branch cannot be set. 
