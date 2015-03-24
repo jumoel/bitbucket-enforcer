@@ -13,13 +13,6 @@ import (
 	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
 )
 
-type publicKey struct {
-	Name string
-	Key  string
-}
-
-type publicKeyList []publicKey
-
 type repositorySettings struct {
 	LandingPage      string
 	Private          bool
@@ -41,6 +34,22 @@ type repositorySettings struct {
 		Groups []map[string]string // ditto
 	}
 }
+
+type publicKey struct {
+	Name string
+	Key  string
+}
+
+type publicKeyList []publicKey
+
+type bbServices []gobucket.Service
+type matchType int
+
+const (
+	matchNone matchType = iota
+	matchContent
+	matchExact
+)
 
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
@@ -124,8 +133,6 @@ func enforcePolicy(repoFullname string, policyname string) {
 
 }
 
-type bbServices []gobucket.Service
-
 func (hooks *bbServices) hasPOSTHook(URL string) bool {
 	for _, hook := range *hooks {
 		if hook.Service.Type == "POST" {
@@ -160,14 +167,6 @@ func enforcePOSTHooks(owner string, repo string, hookURLs []string) error {
 
 	return nil
 }
-
-type matchType int
-
-const (
-	matchNone matchType = iota
-	matchContent
-	matchExact
-)
 
 func (keys *publicKeyList) hasKey(needle gobucket.DeployKey) (matchType, int) {
 	for index, key := range *keys {
