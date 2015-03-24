@@ -118,7 +118,7 @@ func (c *APIClient) GetRepositories(owner string) ([]Repository, error) {
 
 // GetDeployKeys returns a list of all deploy keys attached to a repository
 func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
-	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%sasd/deploy-keys", owner, repo), "GET", nil)
+	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
 
 	if apiresp.StatusCode != 200 {
 		return nil, fmt.Errorf("%s", apiresp.Body)
@@ -132,13 +132,29 @@ func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error
 }
 
 // PostDeployKey attaches a new deploy key to a repository
-func (c *APIClient) PostDeployKey(owner string, repo string, name string, key string) error {
-	return nil
+func (c *APIClient) PostDeployKey(owner string, repository string, name string, key string) error {
+	data := url.Values{}
+	data.Set("label", name)
+	data.Set("key", key)
+
+	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repository), "POST", data)
+
+	if resp.StatusCode == 200 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
 // DeleteDeployKey removes a deploy key from a repository
-func (c *APIClient) DeleteDeployKey(owner string, repo string, keyID int) error {
-	return nil
+func (c *APIClient) DeleteDeployKey(owner string, repository string, keyID int) error {
+	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys/%d", owner, repository, keyID), "DELETE", nil)
+
+	if resp.StatusCode == 204 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
 // RepositoriesChanged returns whether or not the repositories for an account has changed

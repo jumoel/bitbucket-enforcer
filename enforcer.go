@@ -44,7 +44,7 @@ type repositorySettings struct {
 
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
-var bbAPI *gobucket.ApiClient
+var bbAPI *gobucket.APIClient
 
 func main() {
 	log.SetPrefix("bitbucket-enforcer")
@@ -114,15 +114,31 @@ func main() {
 
 	*/
 
-	enforceDeployKeys(parts[0], parts[1], policy.DeployKeys)
+	fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
 
 }
 
-func (keys *publicKeyList) hasKey(key gobucket.DeployKey) bool {
-	return true
+type matchType int
+
+const (
+	matchNone matchType = iota
+	matchContent
+	matchExact
+)
+
+func (keys *publicKeyList) hasKey(needle gobucket.DeployKey) (matchType, int) {
+	for index, key := range *keys {
+		if key.Key == needle.Key && key.Name == needle.Label {
+			return matchExact, index
+		} else if key.Key == needle.Key {
+			return matchContent, index
+		}
+	}
+
+	return matchNone, -1
 }
 
 /*
@@ -132,21 +148,37 @@ they are added again. This ensures that the names of the keys are as
 specified in the policy file, even though it might unnecessarily delete
 and readd the same keys sometimes.
 */
-func enforceDeployKeys(owner string, repo string, keys publicKeyList) {
+func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 	currkeys, _ := bbAPI.GetDeployKeys(owner, repo)
 
+	newkeys := make(publicKeyList, len(keys))
+	copy(newkeys, keys)
+
 	for _, key := range currkeys {
-		if !keys.hasKey(key) {
-			bbAPI.DeleteDeployKey(owner, repo, key.Id)
+		match, matchIndex := newkeys.hasKey(key)
+
+		if match == matchContent {
+			// Delete the key from BB so it can be reuploaded with proper name
+			err := bbAPI.DeleteDeployKey(owner, repo, key.ID)
+
+			if err != nil {
+				return err
+			}
+		} else if match == matchExact {
+			// Don't waste time reuploading key as it is an exact match
+			newkeys = append(newkeys[:matchIndex], newkeys[(matchIndex+1):]...)
 		}
 	}
 
-	for _, key := range keys {
-		bbAPI.PostDeployKey(owner, repo, key.Name, key.Key)
+	for _, key := range newkeys {
+		err := bbAPI.PostDeployKey(owner, repo, key.Name, key.Key)
+
+		if err != nil {
+			return err
+		}
 	}
 
-	fmt.Printf("%+v\n", currkeys)
-	fmt.Printf("%+v\n", keys)
+	return nil
 }
 
 func parseConfig(configFile string) repositorySettings {
