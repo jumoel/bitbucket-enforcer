@@ -181,11 +181,12 @@ func (keys *publicKeyList) hasKey(needle gobucket.DeployKey) (matchType, int) {
 }
 
 /*
-This method ensures the presence of all required keys by removing
-the keys that already exists with the same key-content. Afterwards
-they are added again. This ensures that the names of the keys are as
-specified in the policy file, even though it might unnecessarily delete
-and readd the same keys sometimes.
+This method ensures the presence of all required keys.
+- It removes keys with matching content but mismatching names. Afterwards they
+  are added again, this time with the correct name.
+- It adds keys that are not present.
+- It doesn't remove keys that are present in Bitbucket but not in the policy
+  file.
 */
 func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 	currkeys, _ := bbAPI.GetDeployKeys(owner, repo)
