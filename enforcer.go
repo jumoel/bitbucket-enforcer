@@ -13,6 +13,15 @@ import (
 	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
 )
 
+type branchManagement struct {
+	PreventDelete []string
+	PreventRebase []string
+	AllowPushes   map[string]struct {
+		Groups []string
+		Users  []string
+	}
+}
+
 type repositorySettings struct {
 	LandingPage      string
 	Private          bool
@@ -20,14 +29,7 @@ type repositorySettings struct {
 	Forks            string
 	DeployKeys       publicKeyList
 	PostHooks        []string
-	BranchManagement struct {
-		PreventDelete []string
-		PreventRebase []string
-		AllowPushes   map[string]struct {
-			Groups []string
-			Users  []string
-		}
-	}
+	BranchManagement branchManagement
 
 	AccessManagement struct {
 		Users  []map[string]string // An array of username => permission maps
@@ -122,15 +124,47 @@ func main() {
 		fmt.Println(bbAPI.PutMainBranch(parts[0], parts[1], policy.MainBranch))
 		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
 		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
+		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
 	*/
 
-	fmt.Println(parts)
+	fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
 
-	fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
+	// Avoid errors about unused variables
+	//fmt.Println(policy, parts)
+
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
 
+}
+
+func enforceBranchManagement(owner string, repo string, policies branchManagement) error {
+	/*
+		for _, branch := range policies.PreventDelete {
+			err := bbAPI.PostBranchRestriction(owner, repo, "delete", branch, nil, nil)
+
+			if err != nil {
+				return err
+			}
+		}
+
+		for _, branch := range policies.PreventRebase {
+			err := bbAPI.PostBranchRestriction(owner, repo, "force", branch, nil, nil)
+
+			if err != nil {
+				return err
+			}
+		}
+	*/
+	for branch, permissions := range policies.AllowPushes {
+		err := bbAPI.PostBranchRestriction(owner, repo, "push", branch, permissions.Users, nil)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (hooks *bbServices) hasPOSTHook(URL string) bool {

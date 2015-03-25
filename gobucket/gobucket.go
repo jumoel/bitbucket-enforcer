@@ -59,6 +59,21 @@ type Service struct {
 	}
 }
 
+type restrictionUser struct {
+	username string
+}
+
+type restrictionGroup struct {
+	name string
+}
+
+type branchRestriction struct {
+	kind    string
+	pattern string
+	groups  []restrictionGroup
+	users   []restrictionUser
+}
+
 const baseURL string = "https://bitbucket.org/api"
 
 // New returns an API client for BitBucket
@@ -140,6 +155,41 @@ func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string
 	currentEtag := apiresp.Header.Get("Etag")
 
 	return etag != currentEtag, currentEtag, nil
+}
+
+// PostBranchRestriction adds a new branch restriction to a repository
+func (c *APIClient) PostBranchRestriction(owner string, repo string, kind string, branchpattern string, users []string, groups []string) error {
+	data := url.Values{}
+
+	restriction := branchRestriction{}
+	restriction.kind = kind
+	restriction.pattern = branchpattern
+
+	if users != nil {
+		for _, username := range users {
+			restriction.users = append(restriction.users, restrictionUser{username})
+		}
+	}
+
+	b, _ := json.Marshal(restriction)
+
+	data.Set("body", string(b[:]))
+	/*
+		if groups != nil {
+			for _, group := range groups {
+				data.Add("groups[name]", group)
+			}
+		}
+	*/
+	fmt.Println(data)
+
+	apiresp := c.callV2(fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", data)
+
+	if apiresp.StatusCode == 200 || apiresp.StatusCode == 409 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", apiresp.StatusCode, apiresp.Body)
 }
 
 // GetDeployKeys returns a list of all deploy keys attached to a repository
