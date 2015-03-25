@@ -18,11 +18,11 @@ deploy keys that are present in the repository settings but not in the policy fi
 
   - [X] Landing page
   - [ ] Access management
-  - [ ] Branch management
+  - [X] Branch management
   - [X] Deployment keys
   - [X] Hooks
   - [ ] Issue tracker settings
-  - [?] Overriding enforcement type
+  - [ ] Overriding enforcement type
   - [X] Forking policy
   - [X] Repository privacy
 
