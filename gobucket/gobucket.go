@@ -60,18 +60,19 @@ type Service struct {
 }
 
 type restrictionUser struct {
-	username string
+	Username string `json:"username"`
 }
 
 type restrictionGroup struct {
-	name string
+	Slug  string          `json:"slug"`
+	Owner restrictionUser `json:"owner"`
 }
 
 type branchRestriction struct {
-	kind    string
-	pattern string
-	groups  []restrictionGroup
-	users   []restrictionUser
+	Kind    string             `json:"kind"`
+	Pattern string             `json:"pattern"`
+	Groups  []restrictionGroup `json:"groups"`
+	Users   []restrictionUser  `json:"users"`
 }
 
 const baseURL string = "https://bitbucket.org/api"
@@ -88,25 +89,45 @@ func New(key string, pass string) *APIClient {
 }
 
 func (c *APIClient) callV1(endpoint string, method string, params url.Values) *APIResponse {
-	return c.call("1.0", endpoint, method, params)
+	return c.callFormEnc("1.0", endpoint, method, params)
 }
 
 func (c *APIClient) callV2(endpoint string, method string, params url.Values) *APIResponse {
-	return c.call("2.0", endpoint, method, params)
+	return c.callFormEnc("2.0", endpoint, method, params)
 }
 
-func (c *APIClient) call(version string, endpoint string, method string, params url.Values) *APIResponse {
-	apiurl := fmt.Sprintf("%s/%s/%s", baseURL, version, endpoint)
+func (c *APIClient) callV1JSON(endpoint string, method string, params interface{}) *APIResponse {
+	return c.callJSONEnc("1.0", endpoint, method, params)
+}
 
+func (c *APIClient) callV2JSON(endpoint string, method string, params interface{}) *APIResponse {
+	return c.callJSONEnc("2.0", endpoint, method, params)
+}
+
+func (c *APIClient) callFormEnc(version string, endpoint string, method string, params url.Values) *APIResponse {
 	if params == nil {
 		params = url.Values{}
 	}
 
-	req, _ := http.NewRequest(method, apiurl, bytes.NewBufferString(params.Encode()))
+	payload := params.Encode()
+
+	return c.call(version, endpoint, method, "application/x-www-form-urlencoded", bytes.NewBufferString(payload))
+}
+
+func (c *APIClient) callJSONEnc(version string, endpoint string, method string, params interface{}) *APIResponse {
+	payload, _ := json.Marshal(params)
+
+	return c.call(version, endpoint, method, "application/json", bytes.NewBuffer(payload))
+}
+
+func (c *APIClient) call(version string, endpoint string, method string, contentType string, payload *bytes.Buffer) *APIResponse {
+	apiurl := fmt.Sprintf("%s/%s/%s", baseURL, version, endpoint)
+
+	req, _ := http.NewRequest(method, apiurl, payload)
 
 	if method != "GET" {
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-		req.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+		req.Header.Add("Content-Type", contentType+"; charset=utf-8")
+		req.Header.Add("Content-Length", strconv.Itoa(payload.Len()))
 	}
 
 	req.SetBasicAuth(c.Key, c.Pass)
@@ -159,31 +180,23 @@ func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string
 
 // PostBranchRestriction adds a new branch restriction to a repository
 func (c *APIClient) PostBranchRestriction(owner string, repo string, kind string, branchpattern string, users []string, groups []string) error {
-	data := url.Values{}
-
 	restriction := branchRestriction{}
-	restriction.kind = kind
-	restriction.pattern = branchpattern
+	restriction.Kind = kind
+	restriction.Pattern = branchpattern
 
 	if users != nil {
 		for _, username := range users {
-			restriction.users = append(restriction.users, restrictionUser{username})
+			restriction.Users = append(restriction.Users, restrictionUser{username})
 		}
 	}
 
-	b, _ := json.Marshal(restriction)
-
-	data.Set("body", string(b[:]))
-	/*
-		if groups != nil {
-			for _, group := range groups {
-				data.Add("groups[name]", group)
-			}
+	if groups != nil {
+		for _, groupname := range groups {
+			restriction.Groups = append(restriction.Groups, restrictionGroup{groupname, restrictionUser{owner}})
 		}
-	*/
-	fmt.Println(data)
+	}
 
-	apiresp := c.callV2(fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", data)
+	apiresp := c.callV2JSON(fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", restriction)
 
 	if apiresp.StatusCode == 200 || apiresp.StatusCode == 409 {
 		return nil

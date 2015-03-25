@@ -139,25 +139,24 @@ func enforcePolicy(repoFullname string, policyname string) {
 }
 
 func enforceBranchManagement(owner string, repo string, policies branchManagement) error {
-	/*
-		for _, branch := range policies.PreventDelete {
-			err := bbAPI.PostBranchRestriction(owner, repo, "delete", branch, nil, nil)
+	for _, branch := range policies.PreventDelete {
+		err := bbAPI.PostBranchRestriction(owner, repo, "delete", branch, nil, nil)
 
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
+	}
 
-		for _, branch := range policies.PreventRebase {
-			err := bbAPI.PostBranchRestriction(owner, repo, "force", branch, nil, nil)
+	for _, branch := range policies.PreventRebase {
+		err := bbAPI.PostBranchRestriction(owner, repo, "force", branch, nil, nil)
 
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
-	*/
+	}
+
 	for branch, permissions := range policies.AllowPushes {
-		err := bbAPI.PostBranchRestriction(owner, repo, "push", branch, permissions.Users, nil)
+		err := bbAPI.PostBranchRestriction(owner, repo, "push", branch, permissions.Users, permissions.Groups)
 
 		if err != nil {
 			return err

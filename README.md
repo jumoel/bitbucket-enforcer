@@ -70,3 +70,6 @@ Main branches are not enforced. `bitbucket-enforcer` is meant to be polling for 
 repositories often, so as to enforce policies as soon as a repository is created.
 At this point, there will probably be no branches in the repository, which means
 that a main branch cannot be set.
+
+Groups that are allowed to push to a branch in a repository are at the moment
+assumed to be owned by the repository owner.
