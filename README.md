@@ -28,10 +28,11 @@ deploy keys that are present in the repository settings but not in the policy fi
 
 ## Configuration
 
-The `bitbucket-enforcer` tool uses an OAuth consumer key and password to
+The `bitbucket-enforcer` tool uses an Bitbucket username and API key to
 communicate with the Bitbucket API. These are read from the
-`BITBUCKET_ENFORCE_KEY` and `BITBUCKET_ENFORCE_PASS` environment variables.
-`bitbucket-enforcer` supports [`.env` files](https://www.github.com/joho/godotenv).
+`BITBUCKET_ENFORCER_USERNAME` and `BITBUCKET_ENFORCER_API_KEY` environment
+variables. `bitbucket-enforcer` supports [`.env`
+files](https://www.github.com/joho/godotenv).
 
 Enforcement policy configuration files should be placed in the `config` folder.
 
@@ -44,7 +45,7 @@ Enforcement policy configuration files should be placed in the `config` folder.
 
 Each file in this folder specifies an enforcement type. The files are JSON files
 and should contain each of the following settings that are applicable. See
-`configs/default.json.example` for details.
+`configs/default.json` for details.
 
 If a setting doesn't match the specifications or isn't present, it is ignored.
 
@@ -62,7 +63,7 @@ with `-defaults-enforced`
 
 ## Limitations
 
-Error messages might be bad. They are copied verbatim from bitbucket, and some of
+Error messages might be bad. They are copied verbatim from Bitbucket, and some of
 them contain HTML, some of them JSON-strings and some might contain something else
 entirely.
 
