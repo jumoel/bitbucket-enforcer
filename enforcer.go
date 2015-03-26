@@ -119,16 +119,16 @@ func main() {
 	parts := strings.Split(repoFullname, "/")
 	policy := parseConfig(policyname)
 	/*
-		fmt.Println(bbAPI.PutLandingPage(parts[0], parts[1], policy.LandingPage))
-		fmt.Println(bbAPI.PutPrivacy(parts[0], parts[1], policy.Private))
-		fmt.Println(bbAPI.PutForks(parts[0], parts[1], policy.Forks))
-		fmt.Println(bbAPI.PutMainBranch(parts[0], parts[1], policy.MainBranch))
+		fmt.Println(bbAPI.SetLandingPage(parts[0], parts[1], policy.LandingPage))
+		fmt.Println(bbAPI.SetPrivacy(parts[0], parts[1], policy.Private))
+		fmt.Println(bbAPI.SetForks(parts[0], parts[1], policy.Forks))
+		fmt.Println(bbAPI.SetMainBranch(parts[0], parts[1], policy.MainBranch))
 		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
 		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
 		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
 		fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
 	*/
-	//fmt.Println(bbAPI.PutPublicIssueTracker(parts[0], parts[1], policy.PublicIssueTracker))
+	//fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.PublicIssueTracker))
 
 	// Avoid errors about unused variables
 	fmt.Println(policy, parts)
@@ -140,7 +140,7 @@ func enforcePolicy(repoFullname string, policyname string) {
 
 func enforceBranchManagement(owner string, repo string, policies branchManagement) error {
 	for _, branch := range policies.PreventDelete {
-		err := bbAPI.PostBranchRestriction(owner, repo, "delete", branch, nil, nil)
+		err := bbAPI.AddBranchRestriction(owner, repo, "delete", branch, nil, nil)
 
 		if err != nil {
 			return err
@@ -148,7 +148,7 @@ func enforceBranchManagement(owner string, repo string, policies branchManagemen
 	}
 
 	for _, branch := range policies.PreventRebase {
-		err := bbAPI.PostBranchRestriction(owner, repo, "force", branch, nil, nil)
+		err := bbAPI.AddBranchRestriction(owner, repo, "force", branch, nil, nil)
 
 		if err != nil {
 			return err
@@ -156,7 +156,7 @@ func enforceBranchManagement(owner string, repo string, policies branchManagemen
 	}
 
 	for branch, permissions := range policies.AllowPushes {
-		err := bbAPI.PostBranchRestriction(owner, repo, "push", branch, permissions.Users, permissions.Groups)
+		err := bbAPI.AddBranchRestriction(owner, repo, "push", branch, permissions.Users, permissions.Groups)
 
 		if err != nil {
 			return err
@@ -190,7 +190,7 @@ func enforcePOSTHooks(owner string, repo string, hookURLs []string) error {
 
 	for _, url := range hookURLs {
 		if !currentHooks.hasPOSTHook(url) {
-			err := bbAPI.PostService(owner, repo, "POST", map[string]string{"URL": url})
+			err := bbAPI.AddService(owner, repo, "POST", map[string]string{"URL": url})
 
 			if err != nil {
 				return err
@@ -244,7 +244,7 @@ func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 	}
 
 	for _, key := range newkeys {
-		err := bbAPI.PostDeployKey(owner, repo, key.Name, key.Key)
+		err := bbAPI.AddDeployKey(owner, repo, key.Name, key.Key)
 
 		if err != nil {
 			return err

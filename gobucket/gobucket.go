@@ -178,8 +178,8 @@ func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string
 	return etag != currentEtag, currentEtag, nil
 }
 
-// PostBranchRestriction adds a new branch restriction to a repository
-func (c *APIClient) PostBranchRestriction(owner string, repo string, kind string, branchpattern string, users []string, groups []string) error {
+// AddBranchRestriction adds a new branch restriction to a repository
+func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string, branchpattern string, users []string, groups []string) error {
 	restriction := branchRestriction{}
 	restriction.Kind = kind
 	restriction.Pattern = branchpattern
@@ -235,8 +235,8 @@ func (c *APIClient) GetServices(owner string, repository string) ([]Service, err
 	return serviceResponse, nil
 }
 
-// PostService attaches a new service hook to the repository
-func (c *APIClient) PostService(owner string, repository string, servicetype string, parameters map[string]string) error {
+// AddService attaches a new service hook to the repository
+func (c *APIClient) AddService(owner string, repository string, servicetype string, parameters map[string]string) error {
 	data := url.Values{}
 	data.Set("type", servicetype)
 
@@ -253,8 +253,8 @@ func (c *APIClient) PostService(owner string, repository string, servicetype str
 	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
-// PostDeployKey attaches a new deploy key to a repository
-func (c *APIClient) PostDeployKey(owner string, repository string, name string, key string) error {
+// AddDeployKey attaches a new deploy key to a repository
+func (c *APIClient) AddDeployKey(owner string, repository string, name string, key string) error {
 	data := url.Values{}
 	data.Set("label", name)
 	data.Set("key", key)
@@ -292,9 +292,9 @@ func (c *APIClient) getV1Error(resp *APIResponse) error {
 	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
-// PutLandingPage sets the landing page for a repository: "branches", "commits",
+// SetLandingPage sets the landing page for a repository: "branches", "commits",
 // "downloads", "overview", "pull_requests" or "source".
-func (c *APIClient) PutLandingPage(owner string, repository string, landingpage string) error {
+func (c *APIClient) SetLandingPage(owner string, repository string, landingpage string) error {
 	data := url.Values{}
 	data.Set("landing_page", landingpage)
 
@@ -302,8 +302,8 @@ func (c *APIClient) PutLandingPage(owner string, repository string, landingpage 
 	return c.getV1Error(res)
 }
 
-// PutPrivacy set the repository privacy/visibility
-func (c *APIClient) PutPrivacy(owner string, repository string, isPrivate bool) error {
+// SetPrivacy set the repository privacy/visibility
+func (c *APIClient) SetPrivacy(owner string, repository string, isPrivate bool) error {
 	data := url.Values{}
 	data.Set("is_private", fmt.Sprintf("%t", isPrivate))
 
@@ -311,9 +311,9 @@ func (c *APIClient) PutPrivacy(owner string, repository string, isPrivate bool) 
 	return c.getV1Error(res)
 }
 
-// PutPublicIssueTracker sets whether the repository has PUBLIC or NO issue tracker
+// SetPublicIssueTracker sets whether the repository has PUBLIC or NO issue tracker
 // (Private issue trackers doesn't seem to be supported by the API)
-func (c *APIClient) PutPublicIssueTracker(owner string, repository string, hasPublicIssueTracker bool) error {
+func (c *APIClient) SetPublicIssueTracker(owner string, repository string, hasPublicIssueTracker bool) error {
 	data := url.Values{}
 	data.Set("has_issues", fmt.Sprintf("%t", hasPublicIssueTracker))
 
@@ -321,8 +321,8 @@ func (c *APIClient) PutPublicIssueTracker(owner string, repository string, hasPu
 	return c.getV1Error(res)
 }
 
-// PutMainBranch sets the main branch for the repository
-func (c *APIClient) PutMainBranch(owner string, repository string, mainBranch string) error {
+// SetMainBranch sets the main branch for the repository
+func (c *APIClient) SetMainBranch(owner string, repository string, mainBranch string) error {
 	data := url.Values{}
 	data.Set("main_branch", mainBranch)
 
@@ -330,8 +330,8 @@ func (c *APIClient) PutMainBranch(owner string, repository string, mainBranch st
 	return c.getV1Error(res)
 }
 
-// PutForks set the forking policy for the repository: "none", "private" or "public"
-func (c *APIClient) PutForks(owner string, repository string, forks string) error {
+// SetForks set the forking policy for the repository: "none", "private" or "public"
+func (c *APIClient) SetForks(owner string, repository string, forks string) error {
 	data := url.Values{}
 
 	if forks == "none" {
