@@ -140,25 +140,19 @@ func enforcePolicy(repoFullname string, policyname string) {
 
 func enforceBranchManagement(owner string, repo string, policies branchManagement) error {
 	for _, branch := range policies.PreventDelete {
-		err := bbAPI.AddBranchRestriction(owner, repo, "delete", branch, nil, nil)
-
-		if err != nil {
+		if err := bbAPI.AddBranchRestriction(owner, repo, "delete", branch, nil, nil); err != nil {
 			return err
 		}
 	}
 
 	for _, branch := range policies.PreventRebase {
-		err := bbAPI.AddBranchRestriction(owner, repo, "force", branch, nil, nil)
-
-		if err != nil {
+		if err := bbAPI.AddBranchRestriction(owner, repo, "force", branch, nil, nil); err != nil {
 			return err
 		}
 	}
 
 	for branch, permissions := range policies.AllowPushes {
-		err := bbAPI.AddBranchRestriction(owner, repo, "push", branch, permissions.Users, permissions.Groups)
-
-		if err != nil {
+		if err := bbAPI.AddBranchRestriction(owner, repo, "push", branch, permissions.Users, permissions.Groups); err != nil {
 			return err
 		}
 	}
@@ -182,17 +176,16 @@ func (hooks *bbServices) hasPOSTHook(URL string) bool {
 
 func enforcePOSTHooks(owner string, repo string, hookURLs []string) error {
 	hookList, err := bbAPI.GetServices(owner, repo)
-	var currentHooks bbServices = hookList
 
 	if err != nil {
 		return err
 	}
 
+	var currentHooks bbServices = hookList
+
 	for _, url := range hookURLs {
 		if !currentHooks.hasPOSTHook(url) {
-			err := bbAPI.AddService(owner, repo, "POST", map[string]string{"URL": url})
-
-			if err != nil {
+			if err := bbAPI.AddService(owner, repo, "POST", map[string]string{"URL": url}); err != nil {
 				return err
 			}
 		}
@@ -232,9 +225,7 @@ func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 
 		if match == matchContent {
 			// Delete the key from BB so it can be reuploaded with proper name
-			err := bbAPI.DeleteDeployKey(owner, repo, key.ID)
-
-			if err != nil {
+			if err := bbAPI.DeleteDeployKey(owner, repo, key.ID); err != nil {
 				return err
 			}
 		} else if match == matchExact {
@@ -244,9 +235,7 @@ func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 	}
 
 	for _, key := range newkeys {
-		err := bbAPI.AddDeployKey(owner, repo, key.Name, key.Key)
-
-		if err != nil {
+		if err := bbAPI.AddDeployKey(owner, repo, key.Name, key.Key); err != nil {
 			return err
 		}
 	}
