@@ -311,6 +311,16 @@ func (c *APIClient) PutPrivacy(owner string, repository string, isPrivate bool) 
 	return c.getV1Error(res)
 }
 
+// PutPublicIssueTracker sets whether the repository has PUBLIC or NO issue tracker
+// (Private issue trackers doesn't seem to be supported by the API)
+func (c *APIClient) PutPublicIssueTracker(owner string, repository string, hasPublicIssueTracker bool) error {
+	data := url.Values{}
+	data.Set("has_issues", fmt.Sprintf("%t", hasPublicIssueTracker))
+
+	res := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res)
+}
+
 // PutMainBranch sets the main branch for the repository
 func (c *APIClient) PutMainBranch(owner string, repository string, mainBranch string) error {
 	data := url.Values{}

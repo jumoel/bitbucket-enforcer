@@ -23,13 +23,14 @@ type branchManagement struct {
 }
 
 type repositorySettings struct {
-	LandingPage      string
-	Private          bool
-	MainBranch       string
-	Forks            string
-	DeployKeys       publicKeyList
-	PostHooks        []string
-	BranchManagement branchManagement
+	LandingPage        string
+	Private            bool
+	MainBranch         string
+	Forks              string
+	PublicIssueTracker bool
+	DeployKeys         publicKeyList
+	PostHooks          []string
+	BranchManagement   branchManagement
 
 	AccessManagement struct {
 		Users  []map[string]string // An array of username => permission maps
@@ -125,13 +126,12 @@ func main() {
 		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
 		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
 		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
+		fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
 	*/
-
-	fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
+	//fmt.Println(bbAPI.PutPublicIssueTracker(parts[0], parts[1], policy.PublicIssueTracker))
 
 	// Avoid errors about unused variables
-	//fmt.Println(policy, parts)
-
+	fmt.Println(policy, parts)
 }
 
 func enforcePolicy(repoFullname string, policyname string) {

@@ -21,7 +21,7 @@ deploy keys that are present in the repository settings but not in the policy fi
   - [X] Branch management
   - [X] Deployment keys
   - [X] Hooks
-  - [ ] Issue tracker settings
+  - [X] Public issue tracker settings
   - [ ] Overriding enforcement type
   - [X] Forking policy
   - [X] Repository privacy
@@ -74,3 +74,7 @@ that a main branch cannot be set.
 
 Groups that are allowed to push to a branch in a repository are at the moment
 assumed to be owned by the repository owner.
+
+The Bitbucket API doesn't seem to support having private issue trackers.
+Unfortunately the only settings available are thus public issue tracker or no issue
+tracker.
