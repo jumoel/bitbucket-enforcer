@@ -24,10 +24,10 @@ type branchManagement struct {
 
 type repositorySettings struct {
 	LandingPage        string
-	Private            bool
+	Private            interface{}
 	MainBranch         string
 	Forks              string
-	PublicIssueTracker bool
+	PublicIssueTracker interface{}
 	DeployKeys         publicKeyList
 	PostHooks          []string
 	BranchManagement   branchManagement
@@ -128,10 +128,12 @@ func main() {
 		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
 		fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
 	*/
-	//fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.PublicIssueTracker))
+	if policy.PublicIssueTracker != nil {
+		fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.PublicIssueTracker.(bool)))
+	}
 
 	// Avoid errors about unused variables
-	fmt.Println(policy, parts)
+	//fmt.Println(policy, parts)
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
