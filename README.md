@@ -17,7 +17,7 @@ deploy keys that are present in the repository settings but not in the policy fi
 ## Planned Features
 
   - [X] Landing page
-  - [ ] Access management
+  - [X] Access management
   - [X] Branch management
   - [X] Deployment keys
   - [X] Hooks
