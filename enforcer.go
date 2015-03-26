@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jumoel/bitbucket-enforcer/gobucket"
 	"github.com/jumoel/bitbucket-enforcer/log"
@@ -23,14 +25,13 @@ type branchManagement struct {
 }
 
 type accessManagement struct {
-	Users  map[string]string // An map of usernames => permissions
-	Groups map[string]string // ditto
+	Users  map[string]string // usernames => permissions
+	Groups map[string]string // groupnames => permissions
 }
 
 type repositorySettings struct {
 	LandingPage      string
 	Private          interface{}
-	MainBranch       string
 	Forks            string
 	IssueTracker     string
 	DeployKeys       publicKeyList
@@ -55,6 +56,8 @@ const (
 	matchExact
 )
 
+const sleepTime = 1 * time.Second
+
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
 var bbAPI *gobucket.APIClient
@@ -74,74 +77,124 @@ func main() {
 
 	bbAPI = gobucket.New(bbUsername, bbKey)
 
-	/*
-		  var enforcement_matcher = regexp.MustCompile(`-enforce(?:=([a-zA-Z0-9]+))?`)
+	scanRepositories(bbUsername)
 
-		  var last_etag string = ""
-		  var changed bool
-			for _ = range time.Tick(1 * time.Second) {
-				changed, last_etag = gobucket.RepositoriesChanged(bb_username, last_etag)
+	//fmt.Println(bbAPI.RepositoriesChanged(bbUsername, ""))
+	//fmt.Println(bbAPI.GetRepositories(bbUsername))
+}
 
-		    if !changed {
-		      fmt.Println("No repository changes, sleeping.")
-		      continue
-		    }
+func scanRepositories(bbUsername string) {
+	var enforcementMatcher = regexp.MustCompile(`-enforce(?:=([a-zA-Z0-9]+))?`)
 
-		    repos := gobucket.GetRepositories(bb_username)
+	var lastEtag string
+	var changed bool
 
-		    for _, repo := range repos {
-		      if strings.Contains(repo.Description, "-noenforce") {
-		        fmt.Printf("Skipping <%s> because of '-noenforce'\n", repo.FullName)
-		        continue
-		      }
-
-		      if strings.Contains(repo.Description, "-enforced") {
-		        fmt.Printf("Skipping <%s> because of '-enforced'\n", repo.FullName)
-		        continue
-		      }
-
-		      matches := enforcement_matcher.FindStringSubmatch(repo.Description)
-
-		      enforcement_policy := "default"
-		      if len(matches) > 0 {
-		        enforcement_policy = matches[1]
-		      }
-
-		      enforcePolicy(repo.FullName, enforcement_policy)
-		    }
-			}
-	*/
-
-	enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
-
-	repoFullname := "omi-nu/omi-test-nytnytnyt"
-	policyname := "default"
-
-	parts := strings.Split(repoFullname, "/")
-	policy := parseConfig(policyname)
-	/*
-		fmt.Println(bbAPI.SetLandingPage(parts[0], parts[1], policy.LandingPage))
-		fmt.Println(bbAPI.SetPrivacy(parts[0], parts[1], policy.Private))
-		fmt.Println(bbAPI.SetForks(parts[0], parts[1], policy.Forks))
-		fmt.Println(bbAPI.SetMainBranch(parts[0], parts[1], policy.MainBranch))
-		fmt.Println(enforceDeployKeys(parts[0], parts[1], policy.DeployKeys))
-		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
-		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
-		fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
-
-		if policy.IssueTracker != "" {
-			fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.IssueTracker))
+	for _ = range time.Tick(sleepTime) {
+		var err error
+		if changed, lastEtag, err = bbAPI.RepositoriesChanged(bbUsername, lastEtag); err != nil {
+			log.Error("Error determining if repository list has changed", err)
 		}
-	*/
 
-	fmt.Println(enforceAccessManagement(parts[0], parts[1], policy.AccessManagement))
+		if !changed {
+			if *verbose {
+				log.Info("No repository changes, sleeping.")
+			}
+			continue
+		}
 
-	// Avoid errors about unused variables
-	//fmt.Println(policy, parts)
+		log.Info("Repository list changed")
+
+		repos, err := bbAPI.GetRepositories(bbUsername)
+
+		if err != nil {
+			log.Error("Error getting repository list", err)
+			continue
+		}
+
+		for _, repo := range repos {
+			if strings.Contains(repo.Description, "-noenforce") {
+				if *verbose {
+					log.Info(fmt.Sprintf("Skipping <%s> because of '-noenforce'\n", repo.FullName))
+				}
+				continue
+			}
+
+			if strings.Contains(repo.Description, "-enforced") {
+				if *verbose {
+					log.Info(fmt.Sprintf("Skipping <%s> because of '-enforced'\n", repo.FullName))
+				}
+				continue
+			}
+
+			matches := enforcementMatcher.FindStringSubmatch(repo.Description)
+
+			enforcementPolicy := "default"
+			if len(matches) > 0 {
+				enforcementPolicy = matches[1]
+			}
+
+			if *verbose {
+				fmt.Print(enforcementPolicy)
+			}
+
+			//enforcePolicy(repo.FullName, enforcementPolicy)
+			//	fmt.Println(repo.FullName, enforcementPolicy)
+			//enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
+		}
+	}
 }
 
 func enforcePolicy(repoFullname string, policyname string) {
+	parts := strings.Split(repoFullname, "/")
+	policy, err := parseConfig(policyname)
 
+	if err != nil {
+		log.Error(fmt.Sprintf("Error parsing parsing policy '%s': ", policyname), err)
+	}
+
+	if policy.Private != nil {
+		if err := bbAPI.SetPrivacy(parts[0], parts[1], policy.Private.(bool)); err != nil {
+			log.Warning("Error setting privacy: ", err)
+		}
+	}
+
+	if policy.Forks != "" {
+		if err := bbAPI.SetForks(parts[0], parts[1], policy.Forks); err != nil {
+			log.Warning("Error fork policy: ", err)
+		}
+	}
+
+	if policy.LandingPage != "" {
+		if err := bbAPI.SetLandingPage(parts[0], parts[1], policy.LandingPage); err != nil {
+			log.Warning("Error setting landing page: ", err)
+		}
+	}
+
+	if len(policy.DeployKeys) > 0 {
+		if err := enforceDeployKeys(parts[0], parts[1], policy.DeployKeys); err != nil {
+			log.Warning("Error setting deploy keys: ", err)
+		}
+	}
+
+	if len(policy.PostHooks) > 0 {
+		if err := enforcePOSTHooks(parts[0], parts[1], policy.PostHooks); err != nil {
+			log.Warning("Error setting POST hooks: ", err)
+		}
+	}
+
+	if policy.IssueTracker != "" {
+		if err := bbAPI.SetIssueTracker(parts[0], parts[1], policy.IssueTracker); err != nil {
+			log.Warning("Error setting issue tracker: ", err)
+		}
+	}
+
+	if err := enforceBranchManagement(parts[0], parts[1], policy.BranchManagement); err != nil {
+		log.Warning("Error setting branch policies: ", err)
+	}
+
+	if err := enforceAccessManagement(parts[0], parts[1], policy.AccessManagement); err != nil {
+		log.Warning("Error setting access policies: ", err)
+	}
 }
 
 func enforceAccessManagement(owner string, repo string, policies accessManagement) error {
@@ -265,18 +318,20 @@ func enforceDeployKeys(owner string, repo string, keys publicKeyList) error {
 	return nil
 }
 
-func parseConfig(configFile string) repositorySettings {
+func parseConfig(configFile string) (repositorySettings, error) {
 	rawConfig, err := ioutil.ReadFile(fmt.Sprintf("%s/%s.json", *configDir, configFile))
 	if err != nil {
-		log.Panic(err)
+		return repositorySettings{}, err
 	}
 
 	var config repositorySettings
-	json.Unmarshal(rawConfig, &config)
+	if err := json.Unmarshal(rawConfig, &config); err != nil {
+		return repositorySettings{}, err
+	}
 
 	if *verbose {
 		log.Info("Loaded config: ", config)
 	}
 
-	return config
+	return config, nil
 }
