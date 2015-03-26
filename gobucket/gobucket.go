@@ -88,22 +88,6 @@ func New(key string, pass string) *APIClient {
 	return client
 }
 
-func (c *APIClient) callV1(endpoint string, method string, params url.Values) *APIResponse {
-	return c.callFormEnc("1.0", endpoint, method, params)
-}
-
-func (c *APIClient) callV2(endpoint string, method string, params url.Values) *APIResponse {
-	return c.callFormEnc("2.0", endpoint, method, params)
-}
-
-func (c *APIClient) callV1JSON(endpoint string, method string, params interface{}) *APIResponse {
-	return c.callJSONEnc("1.0", endpoint, method, params)
-}
-
-func (c *APIClient) callV2JSON(endpoint string, method string, params interface{}) *APIResponse {
-	return c.callJSONEnc("2.0", endpoint, method, params)
-}
-
 func (c *APIClient) callFormEnc(version string, endpoint string, method string, params url.Values) *APIResponse {
 	if params == nil {
 		params = url.Values{}
@@ -118,6 +102,10 @@ func (c *APIClient) callJSONEnc(version string, endpoint string, method string, 
 	payload, _ := json.Marshal(params)
 
 	return c.call(version, endpoint, method, "application/json", bytes.NewBuffer(payload))
+}
+
+func (c *APIClient) callStringBody(version string, endpoint string, method string, payload string) *APIResponse {
+	return c.call(version, endpoint, method, "application/json", bytes.NewBufferString(payload))
 }
 
 func (c *APIClient) call(version string, endpoint string, method string, contentType string, payload *bytes.Buffer) *APIResponse {
@@ -147,7 +135,7 @@ func (c *APIClient) GetRepositories(owner string) ([]Repository, error) {
 
 	page := 1
 	for {
-		apiresp := c.callV2(fmt.Sprintf("repositories/%s?page=%d", owner, page), "GET", nil)
+		apiresp := c.callFormEnc("2.0", fmt.Sprintf("repositories/%s?page=%d", owner, page), "GET", nil)
 
 		var reporesp RepositoryResponse
 		json.Unmarshal([]byte(apiresp.Body), &reporesp)
@@ -167,7 +155,7 @@ func (c *APIClient) GetRepositories(owner string) ([]Repository, error) {
 // RepositoriesChanged returns whether or not the repositories for an account has changed
 // as well as the latest ETag returned by the web server.
 func (c *APIClient) RepositoriesChanged(owner string, etag string) (bool, string, error) {
-	apiresp := c.callV2(fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
+	apiresp := c.callFormEnc("2.0", fmt.Sprintf("repositories/%s", owner), "HEAD", nil)
 
 	if apiresp.StatusCode != 200 {
 		return false, etag, fmt.Errorf("%s", apiresp.Body)
@@ -196,7 +184,7 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 		}
 	}
 
-	apiresp := c.callV2JSON(fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", restriction)
+	apiresp := c.callJSONEnc("2.0", fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", restriction)
 
 	if apiresp.StatusCode == 200 || apiresp.StatusCode == 409 {
 		return nil
@@ -207,7 +195,7 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 
 // GetServices returns a list of the service hooks attached to a repository
 func (c *APIClient) GetServices(owner string, repository string) ([]Service, error) {
-	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/services", owner, repository), "GET", nil)
+	resp := c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s/services", owner, repository), "GET", nil)
 
 	if resp.StatusCode != 200 {
 
@@ -229,7 +217,7 @@ func (c *APIClient) AddService(owner string, repository string, servicetype stri
 		data.Set(key, value)
 	}
 
-	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/services", owner, repository), "POST", data)
+	resp := c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s/services", owner, repository), "POST", data)
 
 	if resp.StatusCode == 200 {
 		return nil
@@ -240,7 +228,7 @@ func (c *APIClient) AddService(owner string, repository string, servicetype stri
 
 // GetDeployKeys returns a list of all deploy keys attached to a repository
 func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
-	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
+	apiresp := c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
 
 	if apiresp.StatusCode != 200 {
 		return nil, fmt.Errorf("%s", apiresp.Body)
@@ -259,7 +247,7 @@ func (c *APIClient) AddDeployKey(owner string, repository string, name string, k
 	data.Set("label", name)
 	data.Set("key", key)
 
-	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repository), "POST", data)
+	resp := c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repository), "POST", data)
 
 	if resp.StatusCode == 200 {
 		return nil
@@ -270,7 +258,7 @@ func (c *APIClient) AddDeployKey(owner string, repository string, name string, k
 
 // DeleteDeployKey removes a deploy key from a repository
 func (c *APIClient) DeleteDeployKey(owner string, repository string, keyID int) error {
-	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys/%d", owner, repository, keyID), "DELETE", nil)
+	resp := c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s/deploy-keys/%d", owner, repository, keyID), "DELETE", nil)
 
 	if resp.StatusCode == 204 {
 		return nil
@@ -281,7 +269,7 @@ func (c *APIClient) DeleteDeployKey(owner string, repository string, keyID int) 
 
 // Used when updating properties on repositories
 func (c *APIClient) putV1RepoProp(owner string, repository string, data url.Values) *APIResponse {
-	return c.callV1(fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
+	return c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
 }
 
 func (c *APIClient) getV1Error(resp *APIResponse) error {
