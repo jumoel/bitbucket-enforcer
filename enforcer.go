@@ -150,13 +150,13 @@ func enforceAccessManagement(owner string, repo string, policies accessManagemen
 			return err
 		}
 	}
-	/*
-		for groupname, privilege := range policies.Users {
-			if err := bbAPI.AddUserPrivilege(owner, repo, username, privilege); err != nil {
-				return err
-			}
+
+	for groupname, privilege := range policies.Groups {
+		if err := bbAPI.AddGroupPrivilege(owner, repo, groupname, privilege); err != nil {
+			return err
 		}
-	*/
+	}
+
 	return nil
 }
 

@@ -195,7 +195,22 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 
 // AddUserPrivilege adds a privilege for a user on a repository
 func (c *APIClient) AddUserPrivilege(owner string, repo string, privilegeUser string, privilege string) error {
-	endpoint := fmt.Sprintf("privileges/%s/%s/%s", owner, repo, privilegeUser)
+	return c.addPrivilege(owner, repo, "privileges", privilegeUser, privilege)
+}
+
+// AddGroupPrivilege adds a privilege for a group on a repository
+func (c *APIClient) AddGroupPrivilege(owner string, repo string, privilegeGroup string, privilege string) error {
+	group := fmt.Sprintf("%s/%s", owner, privilegeGroup)
+	return c.addPrivilege(owner, repo, "group-privileges", group, privilege)
+}
+
+func (c *APIClient) addPrivilege(owner string, repo string, privilegeURL string, privilegeEntity string, privilege string) error {
+	endpoint := fmt.Sprintf("%s/%s/%s/%s", privilegeURL, owner, repo, privilegeEntity)
+
+	if !(privilege == "read" || privilege == "write" || privilege == "admin") {
+		return fmt.Errorf("Wrong privilege ('%s'). One of 'read', 'write' or 'admin' required.", privilege)
+	}
+
 	apiresp := c.callStringBody("1.0", endpoint, "PUT", privilege)
 
 	if apiresp.StatusCode == 200 {
