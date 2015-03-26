@@ -133,13 +133,11 @@ func scanRepositories(bbUsername string) {
 				enforcementPolicy = matches[1]
 			}
 
-			if *verbose {
-				fmt.Print(enforcementPolicy)
-			}
+			log.Info(fmt.Sprintf("Enforcing repo '%s' with policy '%s'", repo.FullName, enforcementPolicy))
 
-			//enforcePolicy(repo.FullName, enforcementPolicy)
-			//	fmt.Println(repo.FullName, enforcementPolicy)
-			//enforcePolicy("omi-nu/omi-test-nytnytnyt", "default")
+			if repo.FullName == "omi-nu/testnutnutnutasdasd" {
+				enforcePolicy(repo.FullName, enforcementPolicy)
+			}
 		}
 	}
 }
