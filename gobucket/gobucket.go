@@ -313,9 +313,16 @@ func (c *APIClient) SetPrivacy(owner string, repository string, isPrivate bool) 
 
 // SetPublicIssueTracker sets whether the repository has PUBLIC or NO issue tracker
 // (Private issue trackers doesn't seem to be supported by the API)
-func (c *APIClient) SetPublicIssueTracker(owner string, repository string, hasPublicIssueTracker bool) error {
+func (c *APIClient) SetPublicIssueTracker(owner string, repository string, issueTracker string) error {
 	data := url.Values{}
-	data.Set("has_issues", fmt.Sprintf("%t", hasPublicIssueTracker))
+
+	if issueTracker == "none" {
+		data.Set("has_issues", "false")
+	} else if issueTracker == "public" {
+		data.Set("has_issues", "true")
+	} else {
+		return fmt.Errorf("Issue tracker setting '%s' not valid. 'none' or 'public' required", issueTracker)
+	}
 
 	res := c.putV1RepoProp(owner, repository, data)
 	return c.getV1Error(res)
