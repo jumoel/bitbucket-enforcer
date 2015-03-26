@@ -205,21 +205,6 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 	return fmt.Errorf("[%d]: %s", apiresp.StatusCode, apiresp.Body)
 }
 
-// GetDeployKeys returns a list of all deploy keys attached to a repository
-func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
-	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
-
-	if apiresp.StatusCode != 200 {
-		return nil, fmt.Errorf("%s", apiresp.Body)
-	}
-
-	var keys []DeployKey
-
-	json.Unmarshal([]byte(apiresp.Body), &keys)
-
-	return keys, nil
-}
-
 // GetServices returns a list of the service hooks attached to a repository
 func (c *APIClient) GetServices(owner string, repository string) ([]Service, error) {
 	resp := c.callV1(fmt.Sprintf("repositories/%s/%s/services", owner, repository), "GET", nil)
@@ -251,6 +236,21 @@ func (c *APIClient) AddService(owner string, repository string, servicetype stri
 	}
 
 	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
+}
+
+// GetDeployKeys returns a list of all deploy keys attached to a repository
+func (c *APIClient) GetDeployKeys(owner string, repo string) ([]DeployKey, error) {
+	apiresp := c.callV1(fmt.Sprintf("repositories/%s/%s/deploy-keys", owner, repo), "GET", nil)
+
+	if apiresp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", apiresp.Body)
+	}
+
+	var keys []DeployKey
+
+	json.Unmarshal([]byte(apiresp.Body), &keys)
+
+	return keys, nil
 }
 
 // AddDeployKey attaches a new deploy key to a repository
