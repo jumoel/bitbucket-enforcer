@@ -22,6 +22,11 @@ type branchManagement struct {
 	}
 }
 
+type accessManagement struct {
+	Users  map[string]string // An map of usernames => permissions
+	Groups map[string]string // ditto
+}
+
 type repositorySettings struct {
 	LandingPage      string
 	Private          interface{}
@@ -31,11 +36,7 @@ type repositorySettings struct {
 	DeployKeys       publicKeyList
 	PostHooks        []string
 	BranchManagement branchManagement
-
-	AccessManagement struct {
-		Users  []map[string]string // An array of username => permission maps
-		Groups []map[string]string // ditto
-	}
+	AccessManagement accessManagement
 }
 
 type publicKey struct {
@@ -127,10 +128,13 @@ func main() {
 		fmt.Println(bbAPI.GetServices(parts[0], parts[1]))
 		fmt.Println(enforcePOSTHooks(parts[0], parts[1], policy.PostHooks))
 		fmt.Println(enforceBranchManagement(parts[0], parts[1], policy.BranchManagement))
+
+		if policy.IssueTracker != "" {
+			fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.IssueTracker))
+		}
 	*/
-	if policy.IssueTracker != "" {
-		fmt.Println(bbAPI.SetPublicIssueTracker(parts[0], parts[1], policy.IssueTracker))
-	}
+
+	fmt.Println(enforceAccessManagement(parts[0], parts[1], policy.AccessManagement))
 
 	// Avoid errors about unused variables
 	//fmt.Println(policy, parts)
@@ -138,6 +142,22 @@ func main() {
 
 func enforcePolicy(repoFullname string, policyname string) {
 
+}
+
+func enforceAccessManagement(owner string, repo string, policies accessManagement) error {
+	for username, privilege := range policies.Users {
+		if err := bbAPI.AddUserPrivilege(owner, repo, username, privilege); err != nil {
+			return err
+		}
+	}
+	/*
+		for groupname, privilege := range policies.Users {
+			if err := bbAPI.AddUserPrivilege(owner, repo, username, privilege); err != nil {
+				return err
+			}
+		}
+	*/
+	return nil
 }
 
 func enforceBranchManagement(owner string, repo string, policies branchManagement) error {

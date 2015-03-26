@@ -105,7 +105,7 @@ func (c *APIClient) callJSONEnc(version string, endpoint string, method string, 
 }
 
 func (c *APIClient) callStringBody(version string, endpoint string, method string, payload string) *APIResponse {
-	return c.call(version, endpoint, method, "application/json", bytes.NewBufferString(payload))
+	return c.call(version, endpoint, method, "text/plain", bytes.NewBufferString(payload))
 }
 
 func (c *APIClient) call(version string, endpoint string, method string, contentType string, payload *bytes.Buffer) *APIResponse {
@@ -187,6 +187,18 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 	apiresp := c.callJSONEnc("2.0", fmt.Sprintf("repositories/%s/%s/branch-restrictions", owner, repo), "POST", restriction)
 
 	if apiresp.StatusCode == 200 || apiresp.StatusCode == 409 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", apiresp.StatusCode, apiresp.Body)
+}
+
+// AddUserPrivilege adds a privilege for a user on a repository
+func (c *APIClient) AddUserPrivilege(owner string, repo string, privilegeUser string, privilege string) error {
+	endpoint := fmt.Sprintf("privileges/%s/%s/%s", owner, repo, privilegeUser)
+	apiresp := c.callStringBody("1.0", endpoint, "PUT", privilege)
+
+	if apiresp.StatusCode == 200 {
 		return nil
 	}
 
