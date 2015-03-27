@@ -132,18 +132,16 @@ func scanRepositories(bbUsername string) {
 
 			log.Info(fmt.Sprintf("Enforcing repo '%s' with policy '%s'", repo.FullName, enforcementPolicy))
 
-			if repo.FullName == "omi-nu/testnutnutnutasdasd" {
-				parts := strings.Split(repo.FullName, "/")
-				err := enforcePolicy(parts[0], parts[1], enforcementPolicy)
+			parts := strings.Split(repo.FullName, "/")
+			err := enforcePolicy(parts[0], parts[1], enforcementPolicy)
 
-				if err != nil {
-					log.Warning(fmt.Sprintf("Could not enforce policy '%s' on repo '%s'. Will be processed again next cycle. (%s)", enforcementPolicy, repo.FullName, err))
-				} else {
-					newDescription := strings.TrimSpace(fmt.Sprintf("%s\n\n-enforced", repo.Description))
+			if err != nil {
+				log.Warning(fmt.Sprintf("Could not enforce policy '%s' on repo '%s'. Will be processed again next cycle. (%s)", enforcementPolicy, repo.FullName, err))
+			} else {
+				newDescription := strings.TrimSpace(fmt.Sprintf("%s\n\n-enforced", repo.Description))
 
-					if err := bbAPI.SetDescription(parts[0], parts[1], newDescription); err != nil {
-						log.Warning("Could not set description on repo '%s'. Will be processed again next cycle.", repo.FullName)
-					}
+				if err := bbAPI.SetDescription(parts[0], parts[1], newDescription); err != nil {
+					log.Warning("Could not set description on repo '%s'. Will be processed again next cycle.", repo.FullName)
 				}
 			}
 		}
