@@ -405,6 +405,15 @@ func (c *APIClient) SetMainBranch(owner string, repository string, mainBranch st
 	return c.getV1Error(res, err)
 }
 
+// SetDescription sets the main branch for the repository
+func (c *APIClient) SetDescription(owner string, repository string, description string) error {
+	data := url.Values{}
+	data.Set("description", description)
+
+	res, err := c.putV1RepoProp(owner, repository, data)
+	return c.getV1Error(res, err)
+}
+
 // SetForks set the forking policy for the repository: "none", "private" or "public"
 func (c *APIClient) SetForks(owner string, repository string, forks string) error {
 	data := url.Values{}
