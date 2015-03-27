@@ -78,9 +78,6 @@ func main() {
 	bbAPI = gobucket.New(bbUsername, bbKey)
 
 	scanRepositories(bbUsername)
-
-	//fmt.Println(bbAPI.RepositoriesChanged(bbUsername, ""))
-	//fmt.Println(bbAPI.GetRepositories(bbUsername))
 }
 
 func scanRepositories(bbUsername string) {
@@ -136,63 +133,84 @@ func scanRepositories(bbUsername string) {
 			log.Info(fmt.Sprintf("Enforcing repo '%s' with policy '%s'", repo.FullName, enforcementPolicy))
 
 			if repo.FullName == "omi-nu/testnutnutnutasdasd" {
-				enforcePolicy(repo.FullName, enforcementPolicy)
+				parts := strings.Split(repo.FullName, "/")
+				err := enforcePolicy(parts[0], parts[1], enforcementPolicy)
+
+				if err != nil {
+					log.Warning(fmt.Sprintf("Could not enforce policy '%s' on repo '%s'. Will be processed again next cycle. (%s)", enforcementPolicy, repo.FullName, err))
+				} else {
+					newDescription := strings.TrimSpace(fmt.Sprintf("%s\n\n-enforced", repo.Description))
+
+					if err := bbAPI.SetDescription(parts[0], parts[1], newDescription); err != nil {
+						log.Warning("Could not set description on repo '%s'. Will be processed again next cycle.", repo.FullName)
+					}
+				}
 			}
 		}
 	}
 }
 
-func enforcePolicy(repoFullname string, policyname string) {
-	parts := strings.Split(repoFullname, "/")
+func enforcePolicy(owner string, repo string, policyname string) error {
 	policy, err := parseConfig(policyname)
 
 	if err != nil {
 		log.Error(fmt.Sprintf("Error parsing parsing policy '%s': ", policyname), err)
+		return err
 	}
 
 	if policy.Private != nil {
-		if err := bbAPI.SetPrivacy(parts[0], parts[1], policy.Private.(bool)); err != nil {
+		if err := bbAPI.SetPrivacy(owner, repo, policy.Private.(bool)); err != nil {
 			log.Warning("Error setting privacy: ", err)
+			return err
 		}
 	}
 
 	if policy.Forks != "" {
-		if err := bbAPI.SetForks(parts[0], parts[1], policy.Forks); err != nil {
+		if err := bbAPI.SetForks(owner, repo, policy.Forks); err != nil {
 			log.Warning("Error fork policy: ", err)
+			return err
 		}
 	}
 
 	if policy.LandingPage != "" {
-		if err := bbAPI.SetLandingPage(parts[0], parts[1], policy.LandingPage); err != nil {
+		if err := bbAPI.SetLandingPage(owner, repo, policy.LandingPage); err != nil {
 			log.Warning("Error setting landing page: ", err)
+			return err
 		}
 	}
 
 	if len(policy.DeployKeys) > 0 {
-		if err := enforceDeployKeys(parts[0], parts[1], policy.DeployKeys); err != nil {
+		if err := enforceDeployKeys(owner, repo, policy.DeployKeys); err != nil {
 			log.Warning("Error setting deploy keys: ", err)
+			return err
 		}
 	}
 
 	if len(policy.PostHooks) > 0 {
-		if err := enforcePOSTHooks(parts[0], parts[1], policy.PostHooks); err != nil {
+		if err := enforcePOSTHooks(owner, repo, policy.PostHooks); err != nil {
 			log.Warning("Error setting POST hooks: ", err)
+			return err
 		}
 	}
 
 	if policy.IssueTracker != "" {
-		if err := bbAPI.SetIssueTracker(parts[0], parts[1], policy.IssueTracker); err != nil {
+		if err := bbAPI.SetIssueTracker(owner, repo, policy.IssueTracker); err != nil {
 			log.Warning("Error setting issue tracker: ", err)
+			return err
 		}
 	}
 
-	if err := enforceBranchManagement(parts[0], parts[1], policy.BranchManagement); err != nil {
+	if err := enforceBranchManagement(owner, repo, policy.BranchManagement); err != nil {
 		log.Warning("Error setting branch policies: ", err)
+		return err
 	}
 
-	if err := enforceAccessManagement(parts[0], parts[1], policy.AccessManagement); err != nil {
+	if err := enforceAccessManagement(owner, repo, policy.AccessManagement); err != nil {
 		log.Warning("Error setting access policies: ", err)
+		return err
 	}
+
+	return nil
 }
 
 func enforceAccessManagement(owner string, repo string, policies accessManagement) error {
