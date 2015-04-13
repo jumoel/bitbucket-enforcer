@@ -10,24 +10,29 @@ When `bitbucket-enforcer` has enforced the specified defaults, it will add
 `-defaults-enforced` to the comment field of the repository so the repository
 won't be changed again.
 
+`bitbucket-enforcer` is not destructive, so it won't remove "extra" data, such as
+deploy keys that are present in the repository settings but not in the policy file.
 
-Plans to support:
 
-  - [ ] Landing page
-  - [ ] Main branch
-  - [ ] Access management
-  - [ ] Branch management
-  - [ ] Deployment keys
-  - [ ] Hooks
-  - [ ] Issue tracker settings
+## Planned Features
+
+  - [X] Landing page
+  - [X] Access management
+  - [X] Branch management
+  - [X] Deployment keys
+  - [X] Hooks
+  - [X] Public issue tracker settings
   - [ ] Overriding enforcement type
+  - [X] Forking policy
+  - [X] Repository privacy
 
 ## Configuration
 
-The `bitbucket-enforcer` tool uses an OAuth consumer key and password to
+The `bitbucket-enforcer` tool uses an Bitbucket username and API key to
 communicate with the Bitbucket API. These are read from the
-`BITBUCKET_ENFORCE_KEY` and `BITBUCKET_ENFORCE_PASS` environment variables.
-`bitbucket-enforcer` supports [`.env` files](https://www.github.com/joho/godotenv).
+`BITBUCKET_ENFORCER_USERNAME` and `BITBUCKET_ENFORCER_API_KEY` environment
+variables. `bitbucket-enforcer` supports [`.env`
+files](https://www.github.com/joho/godotenv).
 
 Enforcement policy configuration files should be placed in the `config` folder.
 
@@ -39,34 +44,8 @@ Enforcement policy configuration files should be placed in the `config` folder.
     0 directories, 2 files
 
 Each file in this folder specifies an enforcement type. The files are JSON files
-and should contain each of the following settings that are applicable:
-
-```json
-{
-    "landingpage": "Branches, Commits, Downloads, Issues, Overview, Pull requests or Source",
-    "private": true,
-    "mainbranch": "...",
-    "forks": "none, private or all",
-    "deploykeys": [ { "name": "...", "key": "..." } ],
-    "posthooks": [ "list", "of", "urls" ],
-    "branchmanagement": {
-        "preventdelete": [ "list", "of", "branchnames" ],
-        "preventrebase": [ "list", "of", "branchnames" ],
-        "allowpushes": {
-            "branchname": {
-                "groups": [ "list", "of", "groups" ],
-                "users": [ "list", "of", "users" ]
-            },
-            "anotherbranch": "same as above"
-        }
-    },
-    "accessmanagement": {
-        "users": [ { "username": "read, write or admin" } ],
-        "groups": [ { "groupname": "read, write or admin" } ]
-    }
-}
-
-```
+and should contain each of the following settings that are applicable. See
+`configs/default.json` for details.
 
 If a setting doesn't match the specifications or isn't present, it is ignored.
 
@@ -81,3 +60,21 @@ used to override the default behaviour, which is to enforce `default` settings.
 
 In both cases, the tag will be removed from the description field and replaced
 with `-defaults-enforced`
+
+## Limitations
+
+Error messages might be bad. They are copied verbatim from Bitbucket, and some of
+them contain HTML, some of them JSON-strings and some might contain something else
+entirely.
+
+Main branches are not enforced. `bitbucket-enforcer` is meant to be polling for new
+repositories often, so as to enforce policies as soon as a repository is created.
+At this point, there will probably be no branches in the repository, which means
+that a main branch cannot be set.
+
+Groups that are allowed to push to a branch in a repository are at the moment
+assumed to be owned by the repository owner.
+
+The Bitbucket API doesn't seem to support having private issue trackers.
+Unfortunately the only settings available are thus public issue tracker or no issue
+tracker.

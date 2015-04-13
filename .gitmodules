@@ -1,0 +1,3 @@
+[submodule "vendor/godotenv"]
+	path = vendor/godotenv
+	url = https://github.com/joho/godotenv.git
