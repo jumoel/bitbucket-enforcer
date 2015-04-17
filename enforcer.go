@@ -90,6 +90,7 @@ func scanRepositories(bbUsername string) {
 		var err error
 		if changed, lastEtag, err = bbAPI.RepositoriesChanged(bbUsername, lastEtag); err != nil {
 			log.Error(fmt.Sprintf("Error determining if repository list has changed (%s)", err))
+			continue
 		}
 
 		if !changed {
