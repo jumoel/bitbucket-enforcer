@@ -159,7 +159,7 @@ func (c *APIClient) GetRepositories(owner string) ([]Repository, error) {
 
 		repos = append(repos, reporesp.Repositories...)
 
-		if page*reporesp.PageLen > reporesp.Size {
+		if page*reporesp.PageLen >= reporesp.Size {
 			break
 		}
 
