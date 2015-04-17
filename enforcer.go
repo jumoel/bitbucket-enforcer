@@ -56,7 +56,7 @@ const (
 	matchExact
 )
 
-const sleepTime = 1 * time.Second
+const sleepTime = 5 * time.Second
 
 var configDir = flag.String("configdir", "configs", "the folder containing repository configrations")
 var verbose = flag.Bool("v", false, "print more output")
