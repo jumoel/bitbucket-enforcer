@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
-
 	"github.com/jumoel/bitbucket-enforcer/gobucket"
 	"github.com/jumoel/bitbucket-enforcer/log"
 	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
@@ -91,7 +89,7 @@ func scanRepositories(bbUsername string) {
 	for _ = range time.Tick(sleepTime) {
 		var err error
 		if changed, lastEtag, err = bbAPI.RepositoriesChanged(bbUsername, lastEtag); err != nil {
-			log.Error("Error determining if repository list has changed", err)
+			log.Error(fmt.Sprintf("Error determining if repository list has changed (%s)", err))
 		}
 
 		if !changed {
