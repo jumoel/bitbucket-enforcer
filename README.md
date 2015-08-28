@@ -22,9 +22,10 @@ deploy keys that are present in the repository settings but not in the policy fi
   - [X] Deployment keys
   - [X] Hooks
   - [X] Public issue tracker settings
-  - [ ] Overriding enforcement type
+  - [X] Overriding enforcement type
   - [X] Forking policy
   - [X] Repository privacy
+  - [ ] New Bitbucket Webhooks
 
 ## Configuration
 
