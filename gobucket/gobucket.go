@@ -131,14 +131,20 @@ func (c *APIClient) call(version string, endpoint string, method string, content
 		return nil, err
 	}
 
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	var body string
 
-	if err != nil {
-		return nil, err
+	if method != "HEAD" {
+		defer resp.Body.Close()
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			return nil, err
+		}
+
+		body = string(bodyBytes)
 	}
 
-	apiresp := &APIResponse{resp.Header, StatusCode(resp.StatusCode), string(body)}
+	apiresp := &APIResponse{resp.Header, StatusCode(resp.StatusCode), body}
 
 	return apiresp, nil
 }
@@ -211,7 +217,7 @@ func (c *APIClient) AddBranchRestriction(owner string, repo string, kind string,
 		return err
 	}
 
-	if apiresp.StatusCode == 200 || apiresp.StatusCode == 409 {
+	if apiresp.StatusCode == 200 || apiresp.StatusCode == 201 || apiresp.StatusCode == 409 {
 		return nil
 	}
 
@@ -344,8 +350,20 @@ func (c *APIClient) DeleteDeployKey(owner string, repository string, keyID int) 
 }
 
 // Used when updating properties on repositories
-func (c *APIClient) putV1RepoProp(owner string, repository string, data url.Values) (*APIResponse, error) {
-	return c.callFormEnc("1.0", fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
+func (c *APIClient) putV2RepoProp(owner string, repository string, data interface{}) (*APIResponse, error) {
+	return c.callJSONEnc("2.0", fmt.Sprintf("repositories/%s/%s", owner, repository), "PUT", data)
+}
+
+func (c *APIClient) getV2Error(resp *APIResponse, err error) error {
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode == 200 || resp.StatusCode == 409 {
+		return nil
+	}
+
+	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
 func (c *APIClient) getV1Error(resp *APIResponse, err error) error {
@@ -360,75 +378,46 @@ func (c *APIClient) getV1Error(resp *APIResponse, err error) error {
 	return fmt.Errorf("[%d]: %s", resp.StatusCode, resp.Body)
 }
 
-// SetLandingPage sets the landing page for a repository: "branches", "commits",
-// "downloads", "overview", "pull_requests" or "source".
-func (c *APIClient) SetLandingPage(owner string, repository string, landingpage string) error {
-	data := url.Values{}
-	data.Set("landing_page", landingpage)
-
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
-}
-
 // SetPrivacy set the repository privacy/visibility
 func (c *APIClient) SetPrivacy(owner string, repository string, isPrivate bool) error {
-	data := url.Values{}
-	data.Set("is_private", fmt.Sprintf("%t", isPrivate))
+	props := make(map[string]bool)
+	props["is_private"] = isPrivate
 
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
+	res, err := c.putV2RepoProp(owner, repository, props)
+	return c.getV2Error(res, err)
 }
 
 // SetIssueTracker sets whether the repository has PUBLIC or NO issue tracker
 // (Private issue trackers doesn't seem to be supported by the API)
-func (c *APIClient) SetIssueTracker(owner string, repository string, issueTracker string) error {
-	data := url.Values{}
+func (c *APIClient) SetIssueTracker(owner string, repository string, issueTracker bool) error {
+	props := make(map[string]bool)
+	props["has_issues"] = issueTracker
 
-	if issueTracker == "none" {
-		data.Set("has_issues", "false")
-	} else if issueTracker == "public" {
-		data.Set("has_issues", "true")
-	} else {
-		return fmt.Errorf("Issue tracker setting '%s' not valid. 'none' or 'public' required", issueTracker)
-	}
-
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
-}
-
-// SetMainBranch sets the main branch for the repository
-func (c *APIClient) SetMainBranch(owner string, repository string, mainBranch string) error {
-	data := url.Values{}
-	data.Set("main_branch", mainBranch)
-
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
+	res, err := c.putV2RepoProp(owner, repository, props)
+	return c.getV2Error(res, err)
 }
 
 // SetDescription sets the main branch for the repository
 func (c *APIClient) SetDescription(owner string, repository string, description string) error {
-	data := url.Values{}
-	data.Set("description", description)
+	props := make(map[string]string)
+	props["description"] = description
 
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
+	res, err := c.putV2RepoProp(owner, repository, props)
+	return c.getV2Error(res, err)
 }
 
 // SetForks set the forking policy for the repository: "none", "private" or "public"
 func (c *APIClient) SetForks(owner string, repository string, forks string) error {
-	data := url.Values{}
+	props := make(map[string]string)
 
 	if forks == "none" {
-		data.Set("no_forks", "True")
-		data.Set("no_public_forks", "True")
+		props["fork_policy"] = "no_forks"
 	} else if forks == "private" {
-		data.Set("no_forks", "False")
-		data.Set("no_public_forks", "True")
+		props["fork_policy"] = "no_public_forks"
 	} else if forks == "public" {
-		data.Set("no_forks", "False")
-		data.Set("no_public_forks", "False")
+		props["fork_policy"] = "allow_forks"
 	}
 
-	res, err := c.putV1RepoProp(owner, repository, data)
-	return c.getV1Error(res, err)
+	res, err := c.putV2RepoProp(owner, repository, props)
+	return c.getV2Error(res, err)
 }

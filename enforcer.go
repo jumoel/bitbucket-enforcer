@@ -10,9 +10,10 @@ import (
 	"strings"
 	"time"
 
+	dotenv "godotenv"
+
 	"github.com/jumoel/bitbucket-enforcer/gobucket"
 	"github.com/jumoel/bitbucket-enforcer/log"
-	dotenv "github.com/jumoel/bitbucket-enforcer/vendor/godotenv"
 )
 
 type branchManagement struct {
@@ -30,10 +31,9 @@ type accessManagement struct {
 }
 
 type repositorySettings struct {
-	LandingPage      string
-	Private          interface{}
+	Private          *bool
 	Forks            string
-	IssueTracker     string
+	IssueTracker     *bool
 	DeployKeys       publicKeyList
 	PostHooks        []string
 	BranchManagement branchManagement
@@ -134,6 +134,7 @@ func scanRepositories(bbUsername string) {
 			log.Info(fmt.Sprintf("Enforcing repo '%s' with policy '%s'", repo.FullName, enforcementPolicy))
 
 			parts := strings.Split(repo.FullName, "/")
+
 			err := enforcePolicy(parts[0], parts[1], enforcementPolicy)
 
 			if err != nil {
@@ -157,13 +158,6 @@ func enforcePolicy(owner string, repo string, policyname string) error {
 		return err
 	}
 
-	if policy.Private != nil {
-		if err := bbAPI.SetPrivacy(owner, repo, policy.Private.(bool)); err != nil {
-			log.Warning("Error setting privacy: ", err)
-			return err
-		}
-	}
-
 	if policy.Forks != "" {
 		if err := bbAPI.SetForks(owner, repo, policy.Forks); err != nil {
 			log.Warning("Error fork policy: ", err)
@@ -171,9 +165,9 @@ func enforcePolicy(owner string, repo string, policyname string) error {
 		}
 	}
 
-	if policy.LandingPage != "" {
-		if err := bbAPI.SetLandingPage(owner, repo, policy.LandingPage); err != nil {
-			log.Warning("Error setting landing page: ", err)
+	if policy.Private != nil {
+		if err := bbAPI.SetPrivacy(owner, repo, *policy.Private); err != nil {
+			log.Warning("Error setting privacy: ", err)
 			return err
 		}
 	}
@@ -192,8 +186,8 @@ func enforcePolicy(owner string, repo string, policyname string) error {
 		}
 	}
 
-	if policy.IssueTracker != "" {
-		if err := bbAPI.SetIssueTracker(owner, repo, policy.IssueTracker); err != nil {
+	if policy.IssueTracker != nil {
+		if err := bbAPI.SetIssueTracker(owner, repo, *policy.IssueTracker); err != nil {
 			log.Warning("Error setting issue tracker: ", err)
 			return err
 		}

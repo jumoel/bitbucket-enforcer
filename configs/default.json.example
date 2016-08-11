@@ -1,9 +1,8 @@
 {
-    "landingpage": "source",
     "private": true,
     "forks": "none",
     "mainbranch": "master",
-    "issuetracker": "none",
+    "issuetracker": false,
     "deploykeys": [
         { "name": "some key2", "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuh2FPNxUXtf/9yi36JvdnCTJ/7X9a5zHttbD857OVZqInhJzqjylU0oMmWIVSCJJS/rVD1gC04Ap3xl4CrU1HuTe53WAJuRSd7szVoTejjB9BLph0bBgduANTJFyPhfQoOljYUiRwEISrVEaUIVd3CZxV0a4dPosJpV5FFQauwcuOKr8jefXV8RQecPnLeM85iPZ+Jw0PFeBpqXDO456qmMI971Om05PaJFpj1pBB1POds/rmM31HLLO1Ab8/aWycS3w17Hac/6ujWGPpB+T1Q/nAmh5yA3sKUSD64d4ngegewPlL7f757+vr/UyY+tK93mO+NjTdPO19raemgfpC email@example.com" }
     ],
