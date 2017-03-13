@@ -1,5 +1,11 @@
 # Bitbucket Enforcer
 
+![Not maintained](https://img.shields.io/badge/maintained-no-red.svg)
+![Deprecated](https://img.shields.io/badge/deprecated-yes-red.svg)
+
+**Notice:** This project has not been migrated to the new Bitbucket API and the
+old one is flaky. The project will probably not work correctly.
+
 Daemon to ensure various defaults when repositories are created on Bitbucket.
 
 `bitbucket-enforcer` relies upon the fact that newly created repositories won't
